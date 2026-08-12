@@ -38,14 +38,15 @@ create index if not exists owners_sort_order_idx on public.owners (sort_order);
 -- -----------------------------------------------------------------------------
 create table if not exists public.league_settings (
   id int primary key default 1 check (id = 1),
-  name text not null default 'Yahoo Keepers League',
+  name text not null default 'Upper Deckers',
   tagline text not null default 'Fantasy Football League',
-  rules_summary text not null default '1 keeper · max 2 seasons · $250 dues',
+  rules_summary text not null default 'Draft: Sunday, August 30, 2026 · 3:45 PM EDT',
   dues_amount numeric(10, 2) not null default 250,
   keeper_count int not null default 1,
   keeper_max_seasons int not null default 2,
   season_year int not null default 2026,
   trophy_blurb text not null default 'The prize every season. One champion.',
+  draft_at timestamptz default '2026-08-30T19:45:00+00:00',
   updated_at timestamptz not null default now()
 );
 
@@ -278,15 +279,15 @@ create policy "trash_admin_delete" on public.trash_talk_posts
 -- -----------------------------------------------------------------------------
 insert into public.owners (display_name, team_name, wins, losses, prize_money, badges, is_admin, draft_slot, sort_order)
 select * from (values
-  ('Alex',  'Gridiron Gurus',       82, 63, 2250::numeric, array['champion']::text[],       false, 2,  1),
-  ('Blake', 'End Zone Elite',       71, 74,  450::numeric, array[]::text[],                 false, 4,  2),
-  ('Casey', 'Sunday Scaries',       68, 77,    0::numeric, array['commissioner']::text[],   true,  3,  3),
-  ('Drew',  'Fourth & Forever',     90, 55, 1500::numeric, array['runner_up']::text[],      false, 8,  4),
-  ('Ellis', 'Hail Marys',           64, 81,    0::numeric, array['punished']::text[],       false, 7,  5),
-  ('Finn',  'Blitz Brothers',       75, 70,  250::numeric, array['it']::text[],             false, 1,  6),
-  ('Gray',  'Red Zone Renegades',   59, 86,    0::numeric, array[]::text[],                 false, 9,  7),
-  ('Harper','Pigskin Prophets',     77, 68,  750::numeric, array[]::text[],                 false, 5,  8),
-  ('Indie', 'Audible Alchemists',   70, 75,    0::numeric, array[]::text[],                 false, 6,  9),
-  ('Jules', 'First Down Franchise',  0,  0,    0::numeric, array['rookie']::text[],         false, 10, 10)
+  ('Len', 'Len', 0, 0, 0::numeric, array[]::text[], false, 1, 1),
+  ('BIGBROWNSTAIN', 'BIGBROWNSTAIN', 0, 0, 0::numeric, array[]::text[], false, 2, 2),
+  ('Big Lloyd', 'Big Lloyd', 0, 0, 0::numeric, array[]::text[], false, 3, 3),
+  ('WhitsTits', 'WhitsTits', 0, 0, 0::numeric, array[]::text[], false, 4, 4),
+  ('HAM BONE', 'HAM BONE', 0, 0, 0::numeric, array[]::text[], false, 5, 5),
+  ('Playoff lock mase', 'Playoff lock mase', 0, 0, 0::numeric, array[]::text[], false, 6, 6),
+  ('yo mama', 'yo mama', 0, 0, 0::numeric, array[]::text[], false, 7, 7),
+  ('Lens daddy', 'Lens daddy', 0, 0, 0::numeric, array[]::text[], false, 8, 8),
+  ('Starvin Marvin', 'Starvin Marvin', 0, 0, 0::numeric, array[]::text[], false, 9, 9),
+  ('Benny Backshots', 'Benny Backshots', 0, 0, 0::numeric, array[]::text[], false, 10, 10)
 ) as v(display_name, team_name, wins, losses, prize_money, badges, is_admin, draft_slot, sort_order)
 where not exists (select 1 from public.owners limit 1);

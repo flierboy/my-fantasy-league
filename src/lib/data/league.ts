@@ -9,10 +9,37 @@ import {
 
 export type DataSource = "supabase" | "placeholder";
 
+/** Expected Upper Deckers roster (display names). */
+const UPPER_DECKERS_NAMES = new Set([
+  "Len",
+  "BIGBROWNSTAIN",
+  "Big Lloyd",
+  "WhitsTits",
+  "HAM BONE",
+  "Playoff lock mase",
+  "yo mama",
+  "Lens daddy",
+  "Starvin Marvin",
+  "Benny Backshots",
+]);
+
+/**
+ * True when live rows already match the Upper Deckers seed.
+ * Until the SQL seed is applied in Supabase, fall back to local seed data.
+ */
+function isUpperDeckersRoster(owners: Owner[]): boolean {
+  if (owners.length !== 10) return false;
+  const names = new Set(owners.map((o) => o.display_name));
+  for (const n of UPPER_DECKERS_NAMES) {
+    if (!names.has(n)) return false;
+  }
+  return true;
+}
+
 /**
  * Load public homepage data from Supabase.
- * Falls back to local placeholders if env is missing, queries fail,
- * or the owners table is empty.
+ * Falls back to Upper Deckcers local seed if env is missing, queries fail,
+ * tables are empty, or live data is still the old placeholder roster.
  */
 export async function getPublicLeagueData(): Promise<{
   league: LeagueSettings;
@@ -48,7 +75,6 @@ export async function getPublicLeagueData(): Promise<{
       console.error("[league] owners error:", ownersRes.error.message);
     }
 
-    // Empty owners table → placeholders (schema not seeded yet)
     const hasOwners =
       !ownersRes.error && ownersRes.data && ownersRes.data.length > 0;
 
@@ -60,20 +86,42 @@ export async function getPublicLeagueData(): Promise<{
       };
     }
 
+    const liveOwners = hasOwners
+      ? ownersRes.data!.map((row) =>
+          mapOwner(row as Record<string, unknown>)
+        )
+      : [];
+
+    // Until seed-upper-deckers.sql is applied, serve the real league seed.
+    if (!isUpperDeckersRoster(liveOwners)) {
+      return {
+        league: FALLBACK_LEAGUE,
+        owners: FALLBACK_OWNERS,
+        source: "placeholder",
+      };
+    }
+
     const league = settingsRes.data
       ? mapLeague(settingsRes.data as Record<string, unknown>)
       : FALLBACK_LEAGUE;
 
-    const owners = hasOwners
-      ? ownersRes.data!.map((row) =>
-          mapOwner(row as Record<string, unknown>)
-        )
-      : FALLBACK_OWNERS;
+    // Prefer seeded copy for name/rules if DB still has a partial rename
+    const normalized: LeagueSettings = {
+      ...league,
+      name:
+        league.name.trim().toLowerCase() === "upper deckers"
+          ? "Upper Deckcers"
+          : league.name,
+      rules_summary: league.rules_summary.includes("August 30")
+        ? league.rules_summary
+        : FALLBACK_LEAGUE.rules_summary,
+      draft_at: league.draft_at || FALLBACK_LEAGUE.draft_at,
+    };
 
     return {
-      league,
-      owners,
-      source: hasOwners || settingsRes.data ? "supabase" : "placeholder",
+      league: normalized,
+      owners: liveOwners,
+      source: "supabase",
     };
   } catch (err) {
     console.error("[league] unexpected error:", err);

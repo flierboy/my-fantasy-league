@@ -10,7 +10,10 @@ export type BadgeKey =
   | "punished"
   | "it"
   | "runner_up"
-  | "toilet";
+  | "toilet"
+  | "draft_guru"
+  | "iron_man"
+  | "high_scorer";
 
 export interface Badge {
   key: BadgeKey;
@@ -108,6 +111,8 @@ export interface LeagueSettings {
   keeper_max_seasons: number;
   season_year: number;
   trophy_blurb: string;
+  /** ISO timestamptz for draft countdown (e.g. 2026-08-30T19:45:00.000Z). */
+  draft_at: string | null;
 }
 
 export interface DuePayment {
@@ -120,3 +125,6 @@ export interface DuePayment {
   notes: string | null;
   owner?: Owner;
 }
+
+/** Default Upper Deckcers draft: Sun Aug 30, 2026 3:45 PM EDT = 19:45 UTC */
+export const DEFAULT_DRAFT_AT = "2026-08-30T19:45:00.000Z";

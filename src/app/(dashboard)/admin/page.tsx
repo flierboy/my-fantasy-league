@@ -70,13 +70,16 @@ export default async function AdminHomePage() {
 
   return (
     <div className="space-y-8">
-      <header>
-        <p className="ff-ribbon">Commissioner tools</p>
-        <h1 className="ff-display mt-2 text-3xl tracking-tight">Admin</h1>
-        <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-          Manage {league.name} without leaving the site
-          {owner ? ` · signed in as ${owner.display_name}` : ""}.
-        </p>
+      <header className="ff-welcome">
+        <div className="ff-top-stripe" />
+        <div className="px-5 py-6 sm:px-7">
+          <p className="ff-ribbon text-[10px] !px-3 !py-1">Commissioner tools</p>
+          <h1 className="ff-display mt-3 text-3xl tracking-tight">Admin</h1>
+          <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+            Manage {league.name} without leaving the site
+            {owner ? ` · signed in as ${owner.display_name}` : ""}.
+          </p>
+        </div>
       </header>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -100,10 +103,10 @@ export default async function AdminHomePage() {
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-3.5">
         {SECTIONS.map((s) => (
           <Link key={s.href} href={s.href} className="ff-hub-tile">
-            <span className="text-2xl" aria-hidden>
+            <span className="ff-hub-icon" aria-hidden>
               {s.icon}
             </span>
             <span>{s.title}</span>
@@ -125,12 +128,12 @@ function Stat({
   sub: string;
 }) {
   return (
-    <div className="rounded-xl border-2 border-foreground bg-white p-4 shadow-sm">
-      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+    <div className="ff-stat-card">
+      <p className="pl-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
         {label}
       </p>
-      <p className="ff-display mt-1 text-2xl">{value}</p>
-      <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>
+      <p className="ff-display mt-1 pl-1 text-2xl">{value}</p>
+      <p className="mt-0.5 pl-1 text-xs text-muted-foreground">{sub}</p>
     </div>
   );
 }

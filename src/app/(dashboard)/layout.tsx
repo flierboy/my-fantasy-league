@@ -5,10 +5,6 @@ import { DashboardNav } from "@/components/dashboard/dashboard-nav";
 import { getLeagueSettings } from "@/lib/data/league";
 import { getSessionContext } from "@/lib/auth/session";
 
-/**
- * Shell for all private (login-required) pages.
- * Middleware enforces auth when Supabase env vars are set.
- */
 export const dynamic = "force-dynamic";
 
 export default async function DashboardLayout({
@@ -27,20 +23,21 @@ export default async function DashboardLayout({
       <DashboardNav showAdmin={isAdmin} />
 
       <main className="flex-1">
-        <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
+        <div className="ff-page py-8 sm:py-10">
           {owner && (
-            <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="mb-5 flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+              <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
               Signed in as{" "}
               <span className="text-foreground">{owner.display_name}</span>
               {isAdmin && (
-                <span className="ml-2 rounded-full border border-foreground px-1.5 py-0.5 text-[10px]">
+                <span className="rounded-full border-2 border-foreground bg-[var(--accent-gold)] px-2 py-0.5 text-[10px] text-foreground">
                   Admin
                 </span>
               )}
-            </p>
+            </div>
           )}
           {!owner && (
-            <div className="mb-4 rounded-lg border-2 border-amber-600/40 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+            <div className="ff-card mb-5 border-amber-700/50 bg-amber-50 px-4 py-3 text-sm text-amber-950">
               Your account is not linked to an owner yet. Ask the commissioner to
               set <code className="font-mono text-xs">owners.user_id</code> to
               your auth user id.
@@ -50,11 +47,11 @@ export default async function DashboardLayout({
         </div>
       </main>
 
-      <footer className="border-t border-border py-3 text-center text-xs text-muted-foreground">
-        <Link href="/" className="font-semibold hover:underline">
+      <div className="border-t-2 border-foreground/10 py-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <Link href="/" className="hover:text-foreground hover:underline">
           ← Public homepage
         </Link>
-      </footer>
+      </div>
       <SiteFooter league={league} />
     </div>
   );

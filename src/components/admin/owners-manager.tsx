@@ -1,23 +1,27 @@
 "use client";
 
 import type { Owner } from "@/lib/types";
-import { BADGES } from "@/lib/data/badges";
-import { createOwner, updateOwner, unlinkOwnerUser } from "@/lib/actions/admin/owners";
+import { BADGE_LIST } from "@/lib/data/badges";
+import {
+  createOwner,
+  updateOwner,
+  unlinkOwnerUser,
+  uploadOwnerAvatar,
+} from "@/lib/actions/admin/owners";
 import { ActionForm } from "./action-form";
 import { SubmitButton } from "./submit-button";
 import { Field, fieldInputClass } from "./field";
 import { OwnerAvatar } from "@/components/home/owner-avatar";
 import { formatRecord } from "@/lib/utils";
 
-const BADGE_OPTIONS = Object.values(BADGES);
-
 export function OwnersManager({ owners }: { owners: Owner[] }) {
   return (
     <div className="space-y-8">
-      <section className="rounded-xl border-2 border-foreground bg-white p-5 shadow-sm sm:p-6">
+      <section className="ff-card p-5 sm:p-6">
         <h2 className="ff-display text-xl">Add owner</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Creates a new franchise row. Link a login later with the user UUID.
+          Creates a new franchise row. Link email + auth UUID after creating the
+          login in Supabase Auth.
         </p>
         <ActionForm action={createOwner} className="mt-4">
           <OwnerFields />
@@ -28,12 +32,13 @@ export function OwnersManager({ owners }: { owners: Owner[] }) {
       <section className="space-y-4">
         <h2 className="ff-display text-xl">Edit owners ({owners.length})</h2>
         {owners.map((owner) => (
-          <article
-            key={owner.id}
-            className="rounded-xl border-2 border-foreground bg-white p-4 shadow-sm sm:p-5"
-          >
+          <article key={owner.id} className="ff-card p-4 sm:p-5">
             <div className="mb-4 flex flex-wrap items-center gap-3">
-              <OwnerAvatar name={owner.display_name} src={owner.avatar_url} size="sm" />
+              <OwnerAvatar
+                name={owner.display_name}
+                src={owner.avatar_url}
+                size="md"
+              />
               <div>
                 <p className="ff-display text-base">{owner.display_name}</p>
                 <p className="font-mono text-xs text-muted-foreground">
@@ -41,8 +46,35 @@ export function OwnersManager({ owners }: { owners: Owner[] }) {
                   {owner.draft_slot ?? "—"}
                   {owner.is_admin ? " · admin" : ""}
                   {owner.user_id ? " · linked" : " · not linked"}
+                  {owner.email ? ` · ${owner.email}` : ""}
                 </p>
               </div>
+            </div>
+
+            {/* Avatar upload */}
+            <div className="mb-4 rounded-lg border-2 border-dashed border-border bg-[#f4f2ef]/50 p-3">
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Avatar / selfie upload
+              </p>
+              <ActionForm action={uploadOwnerAvatar}>
+                <input type="hidden" name="id" value={owner.id} />
+                <div className="flex flex-wrap items-end gap-3">
+                  <Field label="Image file" htmlFor={`${owner.id}-avatar-file`}>
+                    <input
+                      id={`${owner.id}-avatar-file`}
+                      name="avatar"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      className="block w-full max-w-xs text-xs file:mr-3 file:rounded-md file:border-2 file:border-foreground file:bg-white file:px-2 file:py-1 file:text-xs file:font-bold"
+                    />
+                  </Field>
+                  <SubmitButton>Upload photo</SubmitButton>
+                </div>
+              </ActionForm>
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                Flow: create Supabase Auth user with their email → paste UUID
+                below → upload selfie here (or paste a public image URL).
+              </p>
             </div>
 
             <ActionForm action={updateOwner}>
@@ -54,9 +86,12 @@ export function OwnersManager({ owners }: { owners: Owner[] }) {
             </ActionForm>
 
             {owner.user_id && (
-              <ActionForm action={unlinkOwnerUser} className="mt-3 border-t border-border pt-3">
+              <ActionForm
+                action={unlinkOwnerUser}
+                className="mt-3 border-t border-border pt-3"
+              >
                 <input type="hidden" name="id" value={owner.id} />
-                <p className="mb-2 font-mono text-[11px] break-all text-muted-foreground">
+                <p className="mb-2 break-all font-mono text-[11px] text-muted-foreground">
                   Linked user: {owner.user_id}
                 </p>
                 <SubmitButton variant="outline">Unlink user</SubmitButton>
@@ -89,7 +124,21 @@ function OwnerFields({ owner }: { owner?: Owner }) {
           className={fieldInputClass}
         />
       </Field>
-      <Field label="Draft slot" htmlFor={id(owner, "draft_slot")} hint="1–20 or empty">
+      <Field
+        label="Email"
+        htmlFor={id(owner, "email")}
+        hint="Same email used in Supabase Auth (for reference)"
+      >
+        <input
+          id={id(owner, "email")}
+          name="email"
+          type="email"
+          defaultValue={owner?.email ?? ""}
+          placeholder="owner@email.com"
+          className={fieldInputClass}
+        />
+      </Field>
+      <Field label="Draft slot" htmlFor={id(owner, "draft_slot")} hint="1–20">
         <input
           id={id(owner, "draft_slot")}
           name="draft_slot"
@@ -157,7 +206,7 @@ function OwnerFields({ owner }: { owner?: Owner }) {
       <Field
         label="Auth user_id"
         htmlFor={id(owner, "user_id")}
-        hint="Paste Supabase Auth UUID. Clear to unlink on save."
+        hint="Supabase Auth → Users → copy UUID"
       >
         <input
           id={id(owner, "user_id")}
@@ -167,13 +216,27 @@ function OwnerFields({ owner }: { owner?: Owner }) {
           className={fieldInputClass + " font-mono text-xs"}
         />
       </Field>
+      <Field
+        label="Avatar URL"
+        htmlFor={id(owner, "avatar_url")}
+        className="sm:col-span-2"
+        hint="Or use the photo upload above"
+      >
+        <input
+          id={id(owner, "avatar_url")}
+          name="avatar_url"
+          defaultValue={owner?.avatar_url ?? ""}
+          placeholder="https://… or leave blank"
+          className={fieldInputClass}
+        />
+      </Field>
 
       <div className="sm:col-span-2 lg:col-span-3">
         <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
           Badges
         </p>
         <div className="flex flex-wrap gap-2">
-          {BADGE_OPTIONS.map((b) => {
+          {BADGE_LIST.map((b) => {
             const checked = owner?.badges.includes(b.key) ?? false;
             return (
               <label
@@ -203,7 +266,7 @@ function OwnerFields({ owner }: { owner?: Owner }) {
           defaultChecked={owner?.is_admin ?? false}
           className="h-4 w-4 accent-foreground"
         />
-        Admin (can access /admin tools)
+        Admin (full site edit access)
       </label>
     </div>
   );

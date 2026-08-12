@@ -1,13 +1,11 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import type { LeagueSettings } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface SiteHeaderProps {
   league: LeagueSettings;
-  /** Show "Sign in" vs "Dashboard" depending on session. */
   isAuthenticated?: boolean;
-  /** When true, show Sign out next to Dashboard (private shell). */
   showSignOut?: boolean;
 }
 
@@ -20,12 +18,19 @@ export function SiteHeader({
     <>
       <div className="ff-top-stripe" />
       <header className="ff-nav sticky top-0 z-40">
-        <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <Link href="/" className="flex items-center gap-2.5 min-w-0">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-2 border-foreground bg-white text-xl">
+        <div className="ff-page flex items-center justify-between gap-4 py-3">
+          <Link href="/" className="flex min-w-0 items-center gap-2.5">
+            <div
+              className={cn(
+                "flex h-11 w-11 shrink-0 items-center justify-center",
+                "rounded-lg border-2 border-foreground bg-white text-xl",
+                "shadow-[2px_2px_0_0_#141414]"
+              )}
+              aria-hidden
+            >
               🏈
             </div>
-            <div className="leading-tight min-w-0">
+            <div className="min-w-0 leading-tight">
               <p className="ff-display truncate text-base sm:text-lg">
                 {league.name}
               </p>
@@ -35,13 +40,15 @@ export function SiteHeader({
             </div>
           </Link>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <Badge variant="live">Live</Badge>
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="ff-live-pill hidden xs:inline-flex sm:inline-flex">
+              Live
+            </span>
             {isAuthenticated ? (
               <>
                 <Link
                   href="/dashboard"
-                  className="inline-flex h-9 items-center rounded-lg border-2 border-foreground bg-foreground px-3 text-xs font-bold uppercase tracking-wide text-background hover:bg-neutral-800"
+                  className="inline-flex h-9 items-center rounded-lg border-2 border-foreground bg-foreground px-3 text-xs font-bold uppercase tracking-wide text-background transition-colors hover:bg-neutral-800"
                 >
                   Dashboard
                 </Link>
@@ -50,7 +57,7 @@ export function SiteHeader({
             ) : (
               <Link
                 href="/login"
-                className="inline-flex h-9 items-center rounded-lg border-2 border-foreground bg-foreground px-3 text-xs font-bold uppercase tracking-wide text-background hover:bg-neutral-800"
+                className="inline-flex h-9 items-center rounded-lg border-2 border-foreground bg-foreground px-3 text-xs font-bold uppercase tracking-wide text-background transition-colors hover:bg-neutral-800"
               >
                 Sign in
               </Link>

@@ -8,6 +8,9 @@ const PROTECTED_PREFIXES = [
   "/dues",
   "/polls",
   "/trash-talk",
+  "/history",
+  "/badges",
+  "/constitution",
   "/admin",
 ] as const;
 
@@ -25,7 +28,6 @@ export async function updateSession(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const env = getSupabaseEnv();
 
-  // No Supabase config → cannot verify sessions; lock private area.
   if (!env) {
     if (isProtectedPath(path)) {
       const loginUrl = request.nextUrl.clone();

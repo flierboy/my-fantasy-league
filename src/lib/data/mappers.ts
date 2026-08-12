@@ -19,6 +19,9 @@ export const BADGE_KEYS = new Set<BadgeKey>([
   "it",
   "runner_up",
   "toilet",
+  "draft_guru",
+  "iron_man",
+  "high_scorer",
 ]);
 
 export function mapOwner(row: Record<string, unknown>): Owner {
@@ -53,6 +56,7 @@ export function mapLeague(row: Record<string, unknown>): LeagueSettings {
     keeper_max_seasons: Number(row.keeper_max_seasons ?? 2),
     season_year: Number(row.season_year ?? 2026),
     trophy_blurb: String(row.trophy_blurb),
+    draft_at: row.draft_at == null ? null : String(row.draft_at),
   };
 }
 

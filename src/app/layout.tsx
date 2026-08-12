@@ -21,12 +21,12 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Yahoo Keepers League",
-    template: "%s · Yahoo Keepers League",
+    default: "Upper Deckers",
+    template: "%s · Upper Deckers",
   },
   description:
-    "Private 10-team Yahoo fantasy football league — owners, draft, standings, dues, polls, and trash talk.",
-  applicationName: "Yahoo Keepers League",
+    "Private 10-team Yahoo fantasy football league Upper Deckers — owners, draft, standings, dues, polls, and trash talk.",
+  applicationName: "Upper Deckers",
 };
 
 export default function RootLayout({

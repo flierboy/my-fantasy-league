@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 /*
- * Design tokens inspired by fakefootball.thebaseballdad.com
- * Warm paper background, ink black borders, gold accent ribbon.
+ * Design system — Fake Football 2k26 style
+ * Warm paper bg, ink borders, gold field accents, Oswald display type.
  */
 :root {
   --background: #f4f2ef;
@@ -26,6 +26,7 @@
   --scorebar-fg: #ffffff;
   --banner: #1f1a17;
   --radius: 0.75rem;
+  --page-max: 64rem; /* ~max-w-5xl */
 }
 
 @theme inline {
@@ -64,13 +65,18 @@ html {
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
+  /* subtle paper grain */
+  background-image:
+    radial-gradient(ellipse at 20% 0%, rgba(240, 193, 75, 0.06), transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(201, 162, 39, 0.05), transparent 45%);
   color: var(--foreground);
   font-family: var(--font-body), "Helvetica Neue", Helvetica, Arial, sans-serif;
   min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Display type — condensed sports headline look */
+/* ---------- Display type ---------- */
 .ff-display {
   font-family: var(--font-display), Impact, "Arial Black", sans-serif;
   letter-spacing: 0.02em;
@@ -78,7 +84,7 @@ body {
   font-weight: 700;
 }
 
-/* Gold/black stadium stripe under header */
+/* Gold/black stadium stripe */
 .ff-top-stripe {
   background: linear-gradient(
     90deg,
@@ -89,14 +95,16 @@ body {
     #1a1a1a 100%
   );
   height: 4px;
+  flex-shrink: 0;
 }
 
 .ff-nav {
   background: var(--nav);
   border-bottom: 2px solid #141414;
+  box-shadow: 0 1px 0 rgba(201, 162, 39, 0.15);
 }
 
-/* Ribbon label used for section kicker text */
+/* Ribbon / pennant section kicker */
 .ff-ribbon {
   background: var(--banner);
   color: #fff;
@@ -108,15 +116,17 @@ body {
   font-size: 0.75rem;
   font-weight: 700;
   display: inline-block;
+  box-shadow: 0 2px 0 rgba(201, 162, 39, 0.35);
 }
 
-/* Owner card hover lift */
+/* Owner / player cards */
 .ff-player-card {
   background: #fff;
   border: 2px solid #141414;
   border-radius: 1rem;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
   overflow: hidden;
+  box-shadow: 0 1px 0 #1414140a;
 }
 
 .ff-player-card:hover {
@@ -124,40 +134,161 @@ body {
   box-shadow: 0 12px 28px #1414141f;
 }
 
-/* Hub tiles for private dashboard */
+/* Hub tiles — large solid cards like the reference clubhouse */
 .ff-hub-tile {
   color: #141414;
-  min-height: 7.5rem;
+  min-height: 8.5rem;
   font-family: var(--font-display), Impact, sans-serif;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   text-align: center;
   background: #fff;
   border: 2px solid #141414;
-  border-radius: 0.85rem;
+  border-radius: 0.9rem;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 0.5rem;
-  padding: 1.25rem 1rem;
+  gap: 0.55rem;
+  padding: 1.5rem 1rem;
   font-weight: 700;
-  transition: background 0.15s, color 0.15s, transform 0.15s;
+  font-size: 0.95rem;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease,
+    box-shadow 0.15s ease;
   display: flex;
+  box-shadow: 0 1px 0 #1414140a;
+  text-decoration: none;
 }
 
 .ff-hub-tile:hover {
   color: #fff;
   background: #141414;
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px #14141422;
+}
+
+.ff-hub-tile:hover .ff-hub-blurb {
+  color: #ffffffcc;
+  opacity: 1;
+}
+
+.ff-hub-tile .ff-hub-icon {
+  font-size: 1.75rem;
+  line-height: 1;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.08));
 }
 
 .ff-hub-tile .ff-hub-blurb {
   font-family: var(--font-body), sans-serif;
   letter-spacing: 0.02em;
   text-transform: none;
-  opacity: 0.7;
-  font-size: 0.7rem;
+  opacity: 0.72;
+  font-size: 0.72rem;
   font-weight: 500;
+  max-width: 12rem;
+  line-height: 1.35;
+}
+
+/* Solid ink card shell used across dashboard pages */
+.ff-card {
+  background: #fff;
+  border: 2px solid #141414;
+  border-radius: 0.9rem;
+  box-shadow: 0 1px 0 #1414140a;
+}
+
+.ff-card-stripe {
+  border-radius: 0.9rem;
+  overflow: hidden;
+  border: 2px solid #141414;
+  background: #fff;
+  box-shadow: 0 1px 0 #1414140a;
+}
+
+/* Page content width */
+.ff-page {
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--page-max);
+  padding-inline: 1rem;
+}
+
+@media (min-width: 640px) {
+  .ff-page {
+    padding-inline: 1.5rem;
+  }
+}
+
+/* Secondary nav under main header */
+.ff-subnav {
+  background: #fff;
+  border-bottom: 2px solid #141414;
+}
+
+.ff-subnav-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #5c5c5c;
+  border-radius: 0.5rem;
+  transition: color 0.12s, background 0.12s;
+  white-space: nowrap;
+}
+
+.ff-subnav-link:hover {
+  color: #141414;
+  background: var(--muted);
+}
+
+.ff-subnav-link[data-active="true"] {
+  color: #fff;
+  background: #141414;
+}
+
+/* Live pill */
+.ff-live-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  border: 1.5px solid #16a34a;
+  color: #15803d;
+  padding: 0.15rem 0.65rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* Stat chips on dashboard */
+.ff-stat-card {
+  background: #fff;
+  border: 2px solid #141414;
+  border-radius: 0.85rem;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 1px 0 #1414140a;
+  position: relative;
+  overflow: hidden;
+}
+
+.ff-stat-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #f0c14b, #c9a227);
+}
+
+/* Welcome banner on private hub */
+.ff-welcome {
+  background: #fff;
+  border: 2px solid #141414;
+  border-radius: 0.95rem;
+  overflow: hidden;
+  box-shadow: 0 2px 0 #1414140d;
 }
 
 @media (prefers-reduced-motion: reduce) {

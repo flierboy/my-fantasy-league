@@ -1,12 +1,13 @@
 import type { Badge, BadgeKey } from "@/lib/types";
 
-/** Canonical badge definitions used on the public owners grid and draft order. */
+/** Canonical badge definitions — hall of badges + owner chips. */
 export const BADGES: Record<BadgeKey, Badge> = {
   champion: {
     key: "champion",
     label: "Champion",
     emoji: "🏆",
-    description: "Won the league championship. The hardware. The glory. Forever.",
+    description:
+      "Won the league championship. The hardware. The glory. Forever.",
     className:
       "border-foreground bg-gradient-to-br from-accent-gold to-yellow-300 text-foreground",
   },
@@ -38,7 +39,8 @@ export const BADGES: Record<BadgeKey, Badge> = {
     key: "it",
     label: "IT",
     emoji: "💻",
-    description: "Keeps the lights on. Builds the site. Fixes the broken stuff.",
+    description:
+      "Keeps the lights on. Builds the site. Fixes the broken stuff.",
     className:
       "border-foreground bg-gradient-to-br from-sky-500 to-blue-700 text-white",
   },
@@ -58,7 +60,34 @@ export const BADGES: Record<BadgeKey, Badge> = {
     className:
       "border-foreground bg-gradient-to-br from-amber-700 to-amber-900 text-white",
   },
+  draft_guru: {
+    key: "draft_guru",
+    label: "Draft Guru",
+    emoji: "🎯",
+    description:
+      "Crushed the draft board. Steals, value, and zero busts (allegedly).",
+    className:
+      "border-indigo-900 bg-gradient-to-br from-indigo-400 to-indigo-700 text-white",
+  },
+  iron_man: {
+    key: "iron_man",
+    label: "Iron Man",
+    emoji: "💪",
+    description: "Never missed a set. Never missed a trash talk. Always online.",
+    className:
+      "border-orange-900 bg-gradient-to-br from-orange-400 to-orange-700 text-white",
+  },
+  high_scorer: {
+    key: "high_scorer",
+    label: "High Scorer",
+    emoji: "🔥",
+    description: "Led the league in points scored. Absolute unit.",
+    className:
+      "border-rose-900 bg-gradient-to-br from-rose-400 to-rose-700 text-white",
+  },
 };
+
+export const BADGE_LIST = Object.values(BADGES);
 
 export function getBadge(key: BadgeKey): Badge {
   return BADGES[key];

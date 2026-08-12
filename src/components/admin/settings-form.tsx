@@ -1,17 +1,26 @@
 "use client";
 
 import type { LeagueSettings } from "@/lib/types";
+import { DEFAULT_DRAFT_AT } from "@/lib/types";
 import { updateLeagueSettings } from "@/lib/actions/admin/settings";
 import { ActionForm } from "./action-form";
 import { SubmitButton } from "./submit-button";
 import { Field, fieldInputClass, fieldTextareaClass } from "./field";
+
+/** Convert ISO → value for datetime-local (local browser TZ). */
+function toDatetimeLocalValue(iso: string | null): string {
+  const d = new Date(iso || DEFAULT_DRAFT_AT);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 export function SettingsForm({ league }: { league: LeagueSettings }) {
   return (
     <div className="rounded-xl border-2 border-foreground bg-white p-5 shadow-sm sm:p-6">
       <h2 className="ff-display text-xl">League settings</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Controls homepage copy, dues amount, and season year.
+        Homepage copy, draft countdown, dues, and season year.
       </p>
 
       <ActionForm action={updateLeagueSettings} className="mt-5">
@@ -34,7 +43,11 @@ export function SettingsForm({ league }: { league: LeagueSettings }) {
               className={fieldInputClass}
             />
           </Field>
-          <Field label="Rules summary" htmlFor="rules_summary" className="sm:col-span-2">
+          <Field
+            label="Rules summary"
+            htmlFor="rules_summary"
+            className="sm:col-span-2"
+          >
             <input
               id="rules_summary"
               name="rules_summary"
@@ -43,7 +56,25 @@ export function SettingsForm({ league }: { league: LeagueSettings }) {
               className={fieldInputClass}
             />
           </Field>
-          <Field label="Trophy blurb" htmlFor="trophy_blurb" className="sm:col-span-2">
+          <Field
+            label="Draft date & time"
+            htmlFor="draft_at"
+            className="sm:col-span-2"
+            hint="Used by the homepage/dashboard countdown. Default: Aug 30, 2026 3:45 PM EDT."
+          >
+            <input
+              id="draft_at"
+              name="draft_at"
+              type="datetime-local"
+              defaultValue={toDatetimeLocalValue(league.draft_at)}
+              className={fieldInputClass}
+            />
+          </Field>
+          <Field
+            label="Trophy blurb"
+            htmlFor="trophy_blurb"
+            className="sm:col-span-2"
+          >
             <textarea
               id="trophy_blurb"
               name="trophy_blurb"

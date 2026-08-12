@@ -15,22 +15,23 @@ export function DraftOrder({ owners }: DraftOrderProps) {
 
   return (
     <section>
-      <div className="mb-4 text-center sm:text-left">
+      <div className="mb-5 text-center sm:mb-6 sm:text-left">
         <p className="ff-ribbon">Draft</p>
-        <h2 className="ff-display mt-2 text-2xl tracking-tight sm:text-3xl">
+        <h2 className="ff-display mt-2.5 text-2xl tracking-tight sm:text-3xl">
           Draft order
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">Current snake order</p>
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          Current snake order
+        </p>
       </div>
 
-      <ol className="overflow-hidden rounded-xl border-2 border-foreground bg-white shadow-sm divide-y-2 divide-border">
+      <ol className="ff-card divide-y-2 divide-border overflow-hidden">
         {ordered.map((owner) => (
           <li
             key={owner.id}
-            className="flex items-center gap-3 px-3 py-3 sm:gap-4 sm:px-5 sm:py-3.5"
+            className="flex items-center gap-3 px-3 py-3.5 sm:gap-4 sm:px-5"
           >
-            {/* Pick number */}
-            <span className="ff-display flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 border-foreground bg-[#f4f2ef] text-sm sm:h-10 sm:w-10 sm:text-base">
+            <span className="ff-display flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-2 border-foreground bg-[#f4f2ef] text-sm shadow-[2px_2px_0_0_#141414] sm:h-11 sm:w-11 sm:text-base">
               {owner.draft_slot}
             </span>
 
@@ -51,6 +52,7 @@ export function DraftOrder({ owners }: DraftOrderProps) {
               </div>
               <p className="mt-0.5 font-mono text-xs font-semibold tabular-nums text-muted-foreground">
                 {formatRecord(owner.wins, owner.losses, owner.ties)}
+                {owner.team_name ? ` · ${owner.team_name}` : ""}
               </p>
             </div>
 

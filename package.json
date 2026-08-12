@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed:upper-deckers": "node scripts/seed-upper-deckers.mjs"
   },
   "engines": {
     "node": ">=20"
