@@ -39,6 +39,12 @@ const SECTIONS = [
     blurb: "One-time 2025 league history",
   },
   {
+    href: "/admin/sleeper",
+    icon: "😴",
+    title: "Sleeper",
+    blurb: "Sync league, teams, standings",
+  },
+  {
     href: "/admin/matchups",
     icon: "📅",
     title: "Matchups",
