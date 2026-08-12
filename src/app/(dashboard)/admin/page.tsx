@@ -33,6 +33,12 @@ const SECTIONS = [
     blurb: "Champions, milestones, records",
   },
   {
+    href: "/admin/import-espn",
+    icon: "📥",
+    title: "ESPN import",
+    blurb: "One-time 2025 league history",
+  },
+  {
     href: "/admin/matchups",
     icon: "📅",
     title: "Matchups",

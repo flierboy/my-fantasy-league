@@ -9,6 +9,7 @@ const LINKS = [
   { href: "/admin/owners", label: "Owners" },
   { href: "/admin/settings", label: "Settings" },
   { href: "/admin/history", label: "History" },
+  { href: "/admin/import-espn", label: "ESPN import" },
   { href: "/admin/matchups", label: "Matchups" },
   { href: "/admin/dues", label: "Dues" },
   { href: "/admin/polls", label: "Polls" },
