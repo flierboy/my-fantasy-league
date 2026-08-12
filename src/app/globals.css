@@ -1,0 +1,170 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens inspired by fakefootball.thebaseballdad.com
+ * Warm paper background, ink black borders, gold accent ribbon.
+ */
+:root {
+  --background: #f4f2ef;
+  --foreground: #141414;
+  --card: #ffffff;
+  --card-foreground: #141414;
+  --muted: #ebe8e3;
+  --muted-foreground: #5c5c5c;
+  --border: #d9d4cc;
+  --primary: #141414;
+  --primary-foreground: #ffffff;
+  --secondary: #e8e4de;
+  --secondary-foreground: #141414;
+  --destructive: #c62828;
+  --destructive-foreground: #ffffff;
+  --ring: #c9a227;
+  --accent-field: #c9a227;
+  --accent-gold: #f0c14b;
+  --nav: #ffffff;
+  --scorebar: #1a1a1a;
+  --scorebar-fg: #ffffff;
+  --banner: #1f1a17;
+  --radius: 0.75rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-ring: var(--ring);
+  --color-accent-field: var(--accent-field);
+  --color-accent-gold: var(--accent-gold);
+  --color-nav: var(--nav);
+  --color-scorebar: var(--scorebar);
+  --color-scorebar-fg: var(--scorebar-fg);
+  --color-banner: var(--banner);
+  --radius-lg: var(--radius);
+  --font-sans: var(--font-body), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-display), Impact, "Arial Black", sans-serif;
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  min-height: 100dvh;
+}
+
+/* Display type — condensed sports headline look */
+.ff-display {
+  font-family: var(--font-display), Impact, "Arial Black", sans-serif;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+/* Gold/black stadium stripe under header */
+.ff-top-stripe {
+  background: linear-gradient(
+    90deg,
+    #1a1a1a 0%,
+    #c9a227 40%,
+    #f0c14b 50%,
+    #c9a227 60%,
+    #1a1a1a 100%
+  );
+  height: 4px;
+}
+
+.ff-nav {
+  background: var(--nav);
+  border-bottom: 2px solid #141414;
+}
+
+/* Ribbon label used for section kicker text */
+.ff-ribbon {
+  background: var(--banner);
+  color: #fff;
+  font-family: var(--font-display), Impact, sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  clip-path: polygon(0 0, 100% 0, 96% 100%, 4% 100%);
+  padding: 0.4rem 1.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: inline-block;
+}
+
+/* Owner card hover lift */
+.ff-player-card {
+  background: #fff;
+  border: 2px solid #141414;
+  border-radius: 1rem;
+  transition: transform 0.15s, box-shadow 0.15s;
+  overflow: hidden;
+}
+
+.ff-player-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px #1414141f;
+}
+
+/* Hub tiles for private dashboard */
+.ff-hub-tile {
+  color: #141414;
+  min-height: 7.5rem;
+  font-family: var(--font-display), Impact, sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  background: #fff;
+  border: 2px solid #141414;
+  border-radius: 0.85rem;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.25rem 1rem;
+  font-weight: 700;
+  transition: background 0.15s, color 0.15s, transform 0.15s;
+  display: flex;
+}
+
+.ff-hub-tile:hover {
+  color: #fff;
+  background: #141414;
+  transform: translateY(-2px);
+}
+
+.ff-hub-tile .ff-hub-blurb {
+  font-family: var(--font-body), sans-serif;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  opacity: 0.7;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
