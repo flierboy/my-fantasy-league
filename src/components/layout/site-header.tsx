@@ -9,6 +9,12 @@ interface SiteHeaderProps {
   showSignOut?: boolean;
 }
 
+const PUBLIC_LINKS = [
+  { href: "/history", label: "History" },
+  { href: "/badges", label: "Badges" },
+  { href: "/constitution", label: "Constitution" },
+];
+
 export function SiteHeader({
   league,
   isAuthenticated = false,
@@ -18,7 +24,7 @@ export function SiteHeader({
     <>
       <div className="ff-top-stripe" />
       <header className="ff-nav sticky top-0 z-40">
-        <div className="ff-page flex items-center justify-between gap-4 py-3">
+        <div className="ff-page flex items-center justify-between gap-3 py-3">
           <Link href="/" className="flex min-w-0 items-center gap-2.5">
             <div
               className={cn(
@@ -40,10 +46,20 @@ export function SiteHeader({
             </div>
           </Link>
 
+          <nav className="hidden items-center gap-0.5 md:flex">
+            {PUBLIC_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="rounded-lg px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
           <div className="flex shrink-0 items-center gap-2">
-            <span className="ff-live-pill hidden xs:inline-flex sm:inline-flex">
-              Live
-            </span>
+            <span className="ff-live-pill hidden sm:inline-flex">Live</span>
             {isAuthenticated ? (
               <>
                 <Link
@@ -63,6 +79,19 @@ export function SiteHeader({
               </Link>
             )}
           </div>
+        </div>
+
+        {/* Mobile public links */}
+        <div className="ff-page flex gap-1 overflow-x-auto border-t border-border/80 pb-2 pt-1 md:hidden">
+          {PUBLIC_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="shrink-0 rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
       </header>
     </>

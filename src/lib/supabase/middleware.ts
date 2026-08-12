@@ -2,15 +2,13 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseEnv } from "./env";
 
+/** Login-required private area only (info pages are public). */
 const PROTECTED_PREFIXES = [
   "/dashboard",
   "/matchups",
   "/dues",
   "/polls",
   "/trash-talk",
-  "/history",
-  "/badges",
-  "/constitution",
   "/admin",
 ] as const;
 
@@ -22,6 +20,7 @@ function isProtectedPath(path: string): boolean {
 
 /**
  * Refresh the Supabase session on every request and gate protected routes.
+ * Public: /, /login, /history, /badges, /constitution
  */
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });

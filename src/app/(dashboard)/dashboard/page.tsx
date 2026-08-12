@@ -9,6 +9,7 @@ import {
 } from "@/lib/data/dashboard";
 import { formatMoney } from "@/lib/utils";
 import { DraftCountdown } from "@/components/home/draft-countdown";
+import { DEFAULT_DRAFT_AT } from "@/lib/types";
 
 export const metadata = {
   title: "Dashboard",
@@ -110,7 +111,7 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <DraftCountdown draftAt={league.draft_at} compact />
+      <DraftCountdown draftAt={league.draft_at || DEFAULT_DRAFT_AT} compact />
 
       <div className="grid gap-3 sm:grid-cols-3">
         <HubStat
