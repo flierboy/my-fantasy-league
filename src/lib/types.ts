@@ -126,5 +126,49 @@ export interface DuePayment {
   owner?: Owner;
 }
 
+/** Admin-editable history rows stored in public.history_entries */
+export type HistoryEntryType = "champion" | "milestone" | "record" | "note";
+
+export interface HistoryEntry {
+  id: string;
+  entry_type: HistoryEntryType;
+  year_label: string;
+  season_year: number | null;
+  title: string;
+  champion: string | null;
+  runner_up: string | null;
+  notes: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 /** Default Upper Deckcers draft: Sun Aug 30, 2026 3:45 PM EDT = 19:45 UTC */
 export const DEFAULT_DRAFT_AT = "2026-08-30T19:45:00.000Z";
+
+export const HISTORY_ENTRY_TYPES: {
+  value: HistoryEntryType;
+  label: string;
+  hint: string;
+}[] = [
+  {
+    value: "champion",
+    label: "Champion",
+    hint: "Season winner + optional runner-up",
+  },
+  {
+    value: "milestone",
+    label: "Milestone / trophy",
+    hint: "Draft nights, league events, hardware moments",
+  },
+  {
+    value: "record",
+    label: "All-time record / stat",
+    hint: "Notable franchise or single-season stats",
+  },
+  {
+    value: "note",
+    label: "Free-form note",
+    hint: "Season summary or general history text",
+  },
+];

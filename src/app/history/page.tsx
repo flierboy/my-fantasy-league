@@ -1,10 +1,6 @@
 import { PublicPageShell } from "@/components/layout/public-page-shell";
 import { getOwners } from "@/lib/data/league";
-import {
-  ALL_TIME_BLURB,
-  CHAMPIONS,
-  MILESTONES,
-} from "@/lib/data/history";
+import { ALL_TIME_BLURB, getHistoryEntries, groupHistory } from "@/lib/data/history";
 import { formatRecord } from "@/lib/utils";
 import { OwnerAvatar } from "@/components/home/owner-avatar";
 
@@ -15,7 +11,13 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function HistoryPage() {
-  const owners = await getOwners();
+  const [{ entries, source }, owners] = await Promise.all([
+    getHistoryEntries(),
+    getOwners(),
+  ]);
+
+  const { champions, milestones, records, notes } = groupHistory(entries);
+
   const sorted = [...owners].sort((a, b) => {
     if (b.wins !== a.wins) return b.wins - a.wins;
     if (a.losses !== b.losses) return a.losses - b.losses;
@@ -33,67 +35,145 @@ export default async function HistoryPage() {
               League history
             </h1>
             <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-              Champions, scars, and the long road to the hardware.{" "}
-              {ALL_TIME_BLURB}
+              Champions, scars, and the long road to the hardware. {ALL_TIME_BLURB}
             </p>
+            {source === "placeholder" && (
+              <p className="mt-3 text-xs font-semibold text-muted-foreground">
+                Showing starter content until admins add entries (Admin → History).
+              </p>
+            )}
           </div>
         </header>
 
+        {/* Champions / trophy wall */}
         <section>
           <p className="ff-ribbon text-[10px] !px-3 !py-1">The hardware</p>
           <h2 className="ff-display mt-2.5 text-2xl">Trophy wall</h2>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {CHAMPIONS.map((c) => (
-              <article key={c.season} className="ff-card p-5 sm:p-6">
-                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                  Season {c.season}
-                </p>
-                <p className="ff-display mt-2 text-2xl tracking-tight">
-                  🏆 {c.champion}
-                </p>
-                {c.runnerUp && (
-                  <p className="mt-1 text-sm font-semibold text-muted-foreground">
-                    Runner-up · {c.runnerUp}
+          {champions.length === 0 ? (
+            <p className="ff-card mt-4 p-5 text-sm text-muted-foreground">
+              No champions recorded yet.
+            </p>
+          ) : (
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {champions.map((c) => (
+                <article key={c.id} className="ff-card p-5 sm:p-6">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                    {c.year_label}
+                    {c.season_year ? ` · ${c.season_year}` : ""}
                   </p>
-                )}
-                {c.note && (
-                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                    {c.note}
+                  <p className="ff-display mt-2 text-2xl tracking-tight">
+                    🏆 {c.champion || c.title}
                   </p>
-                )}
-              </article>
-            ))}
-          </div>
+                  {c.runner_up && (
+                    <p className="mt-1 text-sm font-semibold text-muted-foreground">
+                      Runner-up · {c.runner_up}
+                    </p>
+                  )}
+                  {c.title && c.champion && (
+                    <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      {c.title}
+                    </p>
+                  )}
+                  {c.notes && (
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                      {c.notes}
+                    </p>
+                  )}
+                </article>
+              ))}
+            </div>
+          )}
         </section>
 
+        {/* Milestones */}
         <section>
           <p className="ff-ribbon text-[10px] !px-3 !py-1">Timeline</p>
           <h2 className="ff-display mt-2.5 text-2xl">Milestones</h2>
-          <ol className="ff-card mt-4 divide-y-2 divide-border overflow-hidden">
-            {MILESTONES.map((m) => (
-              <li
-                key={m.year + m.title}
-                className="flex gap-4 px-4 py-4 sm:px-5"
-              >
-                <span className="ff-display flex h-12 w-14 shrink-0 items-center justify-center rounded-lg border-2 border-foreground bg-[#f4f2ef] text-xs shadow-[2px_2px_0_0_#141414]">
-                  {m.year}
-                </span>
-                <div>
-                  <p className="ff-display text-base">{m.title}</p>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    {m.body}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
+          {milestones.length === 0 ? (
+            <p className="ff-card mt-4 p-5 text-sm text-muted-foreground">
+              No milestones yet.
+            </p>
+          ) : (
+            <ol className="ff-card mt-4 divide-y-2 divide-border overflow-hidden">
+              {milestones.map((m) => (
+                <li
+                  key={m.id}
+                  className="flex gap-4 px-4 py-4 sm:px-5"
+                >
+                  <span className="ff-display flex h-12 w-14 shrink-0 items-center justify-center rounded-lg border-2 border-foreground bg-[#f4f2ef] text-xs shadow-[2px_2px_0_0_#141414]">
+                    {m.year_label}
+                  </span>
+                  <div>
+                    <p className="ff-display text-base">{m.title}</p>
+                    {m.notes && (
+                      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                        {m.notes}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
         </section>
 
+        {/* Records / stats */}
+        <section>
+          <p className="ff-ribbon text-[10px] !px-3 !py-1">Stats</p>
+          <h2 className="ff-display mt-2.5 text-2xl">All-time records</h2>
+          {records.length === 0 ? (
+            <p className="mt-2 text-sm text-muted-foreground">
+              No custom record entries yet. Franchise W-L is listed below.
+            </p>
+          ) : (
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {records.map((r) => (
+                <article key={r.id} className="ff-card p-5">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                    {r.year_label}
+                  </p>
+                  <p className="ff-display mt-1.5 text-lg">{r.title}</p>
+                  {r.champion && (
+                    <p className="mt-1 text-sm font-semibold">{r.champion}</p>
+                  )}
+                  {r.notes && (
+                    <p className="mt-2 text-sm text-muted-foreground">{r.notes}</p>
+                  )}
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Free-form notes */}
+        {notes.length > 0 && (
+          <section>
+            <p className="ff-ribbon text-[10px] !px-3 !py-1">Notes</p>
+            <h2 className="ff-display mt-2.5 text-2xl">Season notes</h2>
+            <div className="mt-4 space-y-3">
+              {notes.map((n) => (
+                <article key={n.id} className="ff-card p-5">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                    {n.year_label}
+                  </p>
+                  <p className="ff-display mt-1.5 text-lg">{n.title}</p>
+                  {n.notes && (
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+                      {n.notes}
+                    </p>
+                  )}
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Live franchise table from owners */}
         <section>
           <p className="ff-ribbon text-[10px] !px-3 !py-1">Franchise</p>
-          <h2 className="ff-display mt-2.5 text-2xl">All-time records</h2>
+          <h2 className="ff-display mt-2.5 text-2xl">Franchise standings</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Franchise W-L as tracked on the site (starts fresh for 2026).
+            Live all-time W-L from owner records (editable under Admin → Owners).
           </p>
           <div className="ff-card mt-4 overflow-hidden">
             <table className="w-full text-sm">
@@ -110,9 +190,7 @@ export default async function HistoryPage() {
               <tbody className="divide-y divide-border">
                 {sorted.map((owner, idx) => (
                   <tr key={owner.id}>
-                    <td className="px-4 py-3 font-mono font-bold">
-                      {idx + 1}
-                    </td>
+                    <td className="px-4 py-3 font-mono font-bold">{idx + 1}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <OwnerAvatar

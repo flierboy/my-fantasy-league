@@ -27,6 +27,12 @@ const SECTIONS = [
     blurb: "Name, rules, season, dues amount",
   },
   {
+    href: "/admin/history",
+    icon: "📜",
+    title: "History",
+    blurb: "Champions, milestones, records",
+  },
+  {
     href: "/admin/matchups",
     icon: "📅",
     title: "Matchups",
