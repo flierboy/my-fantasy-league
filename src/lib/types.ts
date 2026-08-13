@@ -35,12 +35,28 @@ export interface Owner {
   wins: number;
   losses: number;
   ties: number;
+  /** Career prize money / cash total */
   prize_money: number;
   badges: BadgeKey[];
   is_admin: boolean;
+  /**
+   * Public role label shown on player cards
+   * (Commissioner, Co-Commissioner, Owner, etc.)
+   */
+  role: string | null;
   draft_slot: number | null;
   sort_order: number;
 }
+
+/** Common roles for admin dropdown */
+export const OWNER_ROLE_OPTIONS = [
+  "",
+  "Commissioner",
+  "Co-Commissioner",
+  "Owner",
+  "Rookie",
+  "IT",
+] as const;
 
 export interface DraftSlot {
   position: number;

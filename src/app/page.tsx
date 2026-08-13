@@ -16,6 +16,7 @@ import { DEFAULT_DRAFT_AT } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 const HOME_LINKS = [
+  { href: "/players", icon: "👥", title: "Players", blurb: "Roster cards & cash" },
   { href: "/history", icon: "📜", title: "History", blurb: "Trophy wall & records" },
   { href: "/badges", icon: "🎖️", title: "Badges", blurb: "Hall of glory & shame" },
   { href: "/constitution", icon: "📖", title: "Constitution", blurb: "League rules" },
@@ -47,7 +48,7 @@ export default async function HomePage() {
                 Explore
               </h2>
             </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {HOME_LINKS.map((link) => (
                 <Link key={link.href} href={link.href} className="ff-hub-tile">
                   <span className="ff-hub-icon" aria-hidden>

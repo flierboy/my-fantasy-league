@@ -1,6 +1,7 @@
 "use client";
 
 import type { Owner } from "@/lib/types";
+import { OWNER_ROLE_OPTIONS } from "@/lib/types";
 import { BADGE_LIST } from "@/lib/data/badges";
 import {
   createOwner,
@@ -125,6 +126,24 @@ function OwnerFields({ owner }: { owner?: Owner }) {
         />
       </Field>
       <Field
+        label="Role"
+        htmlFor={id(owner, "role")}
+        hint="Shown on player cards (Commissioner, Co-Commissioner, …)"
+      >
+        <select
+          id={id(owner, "role")}
+          name="role"
+          defaultValue={owner?.role ?? ""}
+          className={fieldInputClass}
+        >
+          {OWNER_ROLE_OPTIONS.map((r) => (
+            <option key={r || "none"} value={r}>
+              {r || "— None —"}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field
         label="Email"
         htmlFor={id(owner, "email")}
         hint="Same email used in Supabase Auth (for reference)"
@@ -181,7 +200,11 @@ function OwnerFields({ owner }: { owner?: Owner }) {
           className={fieldInputClass}
         />
       </Field>
-      <Field label="Prize money ($)" htmlFor={id(owner, "prize_money")}>
+      <Field
+        label="Career cash / prize money ($)"
+        htmlFor={id(owner, "prize_money")}
+        hint="Shown as the green cash chip on player cards"
+      >
         <input
           id={id(owner, "prize_money")}
           name="prize_money"

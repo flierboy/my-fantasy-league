@@ -24,6 +24,7 @@ create table if not exists public.owners (
   prize_money numeric(10, 2) not null default 0 check (prize_money >= 0),
   badges text[] not null default '{}',
   is_admin boolean not null default false,
+  role text,
   draft_slot int unique check (draft_slot is null or draft_slot between 1 and 20),
   sort_order int not null default 0,
   created_at timestamptz not null default now(),

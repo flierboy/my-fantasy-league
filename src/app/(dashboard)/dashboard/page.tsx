@@ -59,10 +59,10 @@ const TILES = [
     blurb: "Rules of the league",
   },
   {
-    href: "/",
+    href: "/players",
     icon: "👥",
-    title: "Owners",
-    blurb: "Public roster & draft order",
+    title: "Players",
+    blurb: "Roster cards, cash & badges",
   },
   {
     href: "/admin",

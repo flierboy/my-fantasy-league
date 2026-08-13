@@ -26,6 +26,22 @@ export const BADGE_KEYS = new Set<BadgeKey>([
 
 export function mapOwner(row: Record<string, unknown>): Owner {
   const rawBadges = Array.isArray(row.badges) ? (row.badges as string[]) : [];
+  const badges = rawBadges.filter((b): b is BadgeKey =>
+    BADGE_KEYS.has(b as BadgeKey)
+  );
+  const is_admin = Boolean(row.is_admin);
+  const rawRole =
+    row.role == null || String(row.role).trim() === ""
+      ? null
+      : String(row.role).trim();
+
+  // Fall back so cards aren't empty before migrate-owner-role.sql is run
+  let role = rawRole;
+  if (!role) {
+    if (is_admin) role = "Commissioner";
+    else if (badges.includes("commissioner")) role = "Commissioner";
+  }
+
   return {
     id: String(row.id),
     user_id: row.user_id == null ? null : String(row.user_id),
@@ -37,10 +53,9 @@ export function mapOwner(row: Record<string, unknown>): Owner {
     losses: Number(row.losses ?? 0),
     ties: Number(row.ties ?? 0),
     prize_money: Number(row.prize_money ?? 0),
-    badges: rawBadges.filter((b): b is BadgeKey =>
-      BADGE_KEYS.has(b as BadgeKey)
-    ),
-    is_admin: Boolean(row.is_admin),
+    badges,
+    is_admin,
+    role,
     draft_slot: row.draft_slot == null ? null : Number(row.draft_slot),
     sort_order: Number(row.sort_order ?? 0),
   };

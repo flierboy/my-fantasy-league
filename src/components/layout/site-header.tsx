@@ -10,6 +10,7 @@ interface SiteHeaderProps {
 }
 
 const PUBLIC_LINKS = [
+  { href: "/players", label: "Players" },
   { href: "/history", label: "History" },
   { href: "/badges", label: "Badges" },
   { href: "/constitution", label: "Constitution" },

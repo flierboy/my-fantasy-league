@@ -11,6 +11,7 @@ import { parseIntField, parseNumberField } from "./parse";
 
 function revalidateOwners() {
   revalidatePath("/");
+  revalidatePath("/players");
   revalidatePath("/admin");
   revalidatePath("/admin/owners");
   revalidatePath("/dashboard");
@@ -46,6 +47,7 @@ export async function createOwner(formData: FormData): Promise<ActionResult> {
   if (!display_name) return fail("Display name is required");
 
   const team_name = String(formData.get("team_name") ?? "").trim() || null;
+  const role = String(formData.get("role") ?? "").trim() || null;
   const email = parseEmail(formData);
   const avatar_url = parseAvatarUrl(formData);
   const wins = parseIntField(formData.get("wins"), "Wins", { min: 0 });
@@ -79,9 +81,10 @@ export async function createOwner(formData: FormData): Promise<ActionResult> {
   const user_id = user_id_raw || null;
 
   const supabase = await createClient();
-  const { error } = await supabase.from("owners").insert({
+  const payload = {
     display_name,
     team_name,
+    role,
     email,
     avatar_url,
     wins: wins.value ?? 0,
@@ -93,7 +96,14 @@ export async function createOwner(formData: FormData): Promise<ActionResult> {
     is_admin,
     badges,
     user_id,
-  });
+  };
+  let { error } = await supabase.from("owners").insert(payload);
+
+  // If role column not migrated yet, retry without it
+  if (error?.message?.includes("role")) {
+    const { role: _r, ...withoutRole } = payload;
+    ({ error } = await supabase.from("owners").insert(withoutRole));
+  }
 
   if (error) return fail(error.message);
   revalidateOwners();
@@ -111,6 +121,7 @@ export async function updateOwner(formData: FormData): Promise<ActionResult> {
   if (!display_name) return fail("Display name is required");
 
   const team_name = String(formData.get("team_name") ?? "").trim() || null;
+  const role = String(formData.get("role") ?? "").trim() || null;
   const email = parseEmail(formData);
   const avatar_url = parseAvatarUrl(formData);
   const wins = parseIntField(formData.get("wins"), "Wins", { min: 0 });
@@ -148,24 +159,36 @@ export async function updateOwner(formData: FormData): Promise<ActionResult> {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("owners")
-    .update({
-      display_name,
-      team_name,
-      email,
-      avatar_url,
-      wins: wins.value ?? 0,
-      losses: losses.value ?? 0,
-      ties: ties.value ?? 0,
-      prize_money: prize.value ?? 0,
-      draft_slot: draft.value,
-      sort_order: sort.value ?? 0,
-      is_admin,
-      badges,
-      user_id,
-    })
-    .eq("id", id);
+  const payload = {
+    display_name,
+    team_name,
+    role,
+    email,
+    avatar_url,
+    wins: wins.value ?? 0,
+    losses: losses.value ?? 0,
+    ties: ties.value ?? 0,
+    prize_money: prize.value ?? 0,
+    draft_slot: draft.value,
+    sort_order: sort.value ?? 0,
+    is_admin,
+    badges,
+    user_id,
+  };
+  let { error } = await supabase.from("owners").update(payload).eq("id", id);
+
+  if (error?.message?.includes("role")) {
+    const { role: _r, ...withoutRole } = payload;
+    ({ error } = await supabase
+      .from("owners")
+      .update(withoutRole)
+      .eq("id", id));
+    if (!error) {
+      return fail(
+        "Saved without role — run supabase/migrate-owner-role.sql to enable the role column"
+      );
+    }
+  }
 
   if (error) return fail(error.message);
   revalidateOwners();
