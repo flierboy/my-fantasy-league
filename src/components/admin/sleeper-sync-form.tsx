@@ -2,16 +2,21 @@
 
 import { useState, useTransition } from "react";
 import {
+  sendWeeklyResultsEmail,
   syncSleeperLeague,
   type SleeperSyncSummary,
 } from "@/lib/actions/admin/sleeper";
+import type { ActionResult } from "@/lib/actions/admin/types";
 import { SLEEPER_DEFAULT_LEAGUE_ID } from "@/lib/sleeper/client";
 import { Button } from "@/components/ui/button";
 import { Field, fieldInputClass } from "./field";
+import { FormMessage } from "./form-message";
 
 export function SleeperSyncForm() {
   const [pending, startTransition] = useTransition();
+  const [emailPending, startEmailTransition] = useTransition();
   const [result, setResult] = useState<SleeperSyncSummary | null>(null);
+  const [emailResult, setEmailResult] = useState<ActionResult | null>(null);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -20,6 +25,16 @@ export function SleeperSyncForm() {
     startTransition(async () => {
       const summary = await syncSleeperLeague(fd);
       setResult(summary);
+    });
+  }
+
+  function onWeeklyEmail(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    setEmailResult(null);
+    startEmailTransition(async () => {
+      const res = await sendWeeklyResultsEmail(fd);
+      setEmailResult(res);
     });
   }
 
@@ -70,9 +85,87 @@ export function SleeperSyncForm() {
           Overwrite site league name with Sleeper league name
         </label>
 
+        <div className="rounded-lg border border-border bg-[#f4f2ef] p-3 space-y-3">
+          <label className="flex items-start gap-2 text-sm font-semibold">
+            <input
+              type="checkbox"
+              name="email_weekly_after_sync"
+              className="mt-0.5 h-4 w-4 accent-foreground"
+            />
+            <span>
+              Email weekly results after sync
+              <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                Only when the season is underway (not pre-draft). Uses previous
+                NFL week by default. Requires RESEND_API_KEY + owner emails.
+              </span>
+            </span>
+          </label>
+          <Field
+            label="Week override (optional)"
+            htmlFor="weekly_week"
+            hint="Leave blank to auto-pick the latest completed week"
+          >
+            <input
+              id="weekly_week"
+              name="weekly_week"
+              type="number"
+              min={1}
+              max={22}
+              className={fieldInputClass}
+              placeholder="e.g. 3"
+            />
+          </Field>
+        </div>
+
         <Button type="submit" disabled={pending} className="w-full sm:w-auto">
           {pending ? "Syncing from Sleeper…" : "Sync from Sleeper"}
         </Button>
+      </form>
+
+      <form onSubmit={onWeeklyEmail} className="ff-card space-y-4 p-5 sm:p-6">
+        <div>
+          <h2 className="ff-display text-xl">Send weekly email</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Build a “Week X Results” email from Sleeper matchups, standings, and
+            waivers (if any), then send to all owners with email on file.
+          </p>
+        </div>
+
+        <Field label="Sleeper league ID" htmlFor="email_league_id">
+          <input
+            id="email_league_id"
+            name="league_id"
+            defaultValue={SLEEPER_DEFAULT_LEAGUE_ID}
+            className={fieldInputClass + " font-mono text-xs"}
+            required
+          />
+        </Field>
+        <Field
+          label="Week (optional)"
+          htmlFor="email_week"
+          hint="Blank = auto (usually last completed week)"
+        >
+          <input
+            id="email_week"
+            name="week"
+            type="number"
+            min={1}
+            max={22}
+            className={fieldInputClass}
+            placeholder="e.g. 3"
+          />
+        </Field>
+
+        <Button
+          type="submit"
+          disabled={emailPending}
+          variant="outline"
+          className="w-full sm:w-auto"
+        >
+          {emailPending ? "Sending…" : "Send weekly email"}
+        </Button>
+
+        <FormMessage result={emailResult} />
       </form>
 
       {result && (
@@ -124,6 +217,14 @@ export function SleeperSyncForm() {
                   <strong>League name updated:</strong>{" "}
                   {result.settingsUpdated ? "yes" : "no"}
                 </li>
+                {result.weeklyEmail && (
+                  <li>
+                    <strong>Weekly email:</strong> {result.weeklyEmail.message}
+                    {result.weeklyEmail.week != null
+                      ? ` (week ${result.weeklyEmail.week})`
+                      : ""}
+                  </li>
+                )}
               </ul>
 
               {result.teamPreview && result.teamPreview.length > 0 && (

@@ -10,6 +10,9 @@ import {
   fetchSleeperUsers,
 } from "@/lib/sleeper/client";
 import { buildSleeperPreview, matchOwnerId } from "@/lib/sleeper/map";
+import { sendWeeklyResultsEmailToOwners } from "@/lib/email/weekly";
+import type { ActionResult } from "./types";
+import { fail, ok } from "./types";
 import { requireAdmin } from "./utils";
 
 export type SleeperSyncSummary = {
@@ -34,6 +37,13 @@ export type SleeperSyncSummary = {
     matchedOwner?: string;
   }[];
   notes?: string[];
+  /** Set when “Email weekly results after sync” is checked */
+  weeklyEmail?: {
+    sent: number;
+    failed: number;
+    message: string;
+    week?: number;
+  };
 };
 
 function revalidateAll() {
@@ -63,6 +73,12 @@ export async function syncSleeperLeague(
   const createMissing = formData.get("create_missing") === "on";
   const updateLeagueName = formData.get("update_league_name") === "on";
   const updateRecords = formData.get("update_records") !== "off"; // default on
+  const emailWeeklyAfterSync =
+    formData.get("email_weekly_after_sync") === "on";
+  const weeklyWeekRaw = String(formData.get("weekly_week") ?? "").trim();
+  const weeklyWeekParsed = weeklyWeekRaw
+    ? Number.parseInt(weeklyWeekRaw, 10)
+    : undefined;
 
   const notes: string[] = [];
 
@@ -279,6 +295,39 @@ export async function syncSleeperLeague(
 
     revalidateAll();
 
+    let weeklyEmail: SleeperSyncSummary["weeklyEmail"];
+
+    // Auto weekly email only when season is underway (not pre_draft) and opted in
+    const seasonUnderway =
+      preview.status !== "pre_draft" && preview.status !== "drafting";
+    if (emailWeeklyAfterSync) {
+      if (!seasonUnderway) {
+        notes.push(
+          "Skipped weekly results email — league is still pre-draft/drafting. Use “Send weekly email” once the season starts."
+        );
+      } else {
+        const emailResult = await sendWeeklyResultsEmailToOwners({
+          leagueId,
+          week:
+            weeklyWeekParsed != null && Number.isFinite(weeklyWeekParsed)
+              ? weeklyWeekParsed
+              : undefined,
+        });
+        weeklyEmail = {
+          sent: emailResult.sent,
+          failed: emailResult.failed,
+          message: emailResult.message,
+          week: emailResult.week,
+        };
+        notes.push(
+          `Weekly email (week ${emailResult.week ?? "?"}): ${emailResult.message}`
+        );
+        if (emailResult.notes?.length) {
+          notes.push(...emailResult.notes);
+        }
+      }
+    }
+
     return {
       ok: true,
       leagueId: preview.leagueId,
@@ -295,6 +344,7 @@ export async function syncSleeperLeague(
       settingsUpdated,
       teamPreview,
       notes,
+      weeklyEmail,
     };
   } catch (err) {
     return {
@@ -303,4 +353,48 @@ export async function syncSleeperLeague(
       leagueId,
     };
   }
+}
+
+/**
+ * Manual “Send weekly email” — Week X Results to all owners with email on file.
+ * Does not require a full standings sync first (pulls live Sleeper matchups/standings).
+ */
+export async function sendWeeklyResultsEmail(
+  formData: FormData
+): Promise<ActionResult> {
+  const gate = await requireAdmin();
+  if (!gate.ok) return fail(gate.error);
+
+  const leagueId =
+    String(formData.get("league_id") ?? "").trim() ||
+    SLEEPER_DEFAULT_LEAGUE_ID;
+  const weekRaw = String(formData.get("week") ?? "").trim();
+  const week = weekRaw ? Number.parseInt(weekRaw, 10) : undefined;
+
+  if (weekRaw && (!Number.isFinite(week) || (week ?? 0) < 1)) {
+    return fail("Week must be a positive number");
+  }
+
+  const result = await sendWeeklyResultsEmailToOwners({
+    leagueId,
+    week: week != null && Number.isFinite(week) ? week : undefined,
+  });
+
+  if (!result.ok && result.sent === 0) {
+    return fail(
+      result.message +
+        (result.errors[0] ? ` — ${result.errors[0]}` : "")
+    );
+  }
+
+  const weekLabel =
+    result.week != null ? `Week ${result.week}` : "Weekly";
+  const note =
+    result.notes && result.notes.length
+      ? ` ${result.notes.slice(0, 2).join(" ")}`
+      : "";
+
+  return ok(
+    `${weekLabel} results email: ${result.message}${note}`.trim()
+  );
 }

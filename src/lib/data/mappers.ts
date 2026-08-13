@@ -39,6 +39,7 @@ export function mapOwner(row: Record<string, unknown>): Owner {
     team_name: (row.team_name as string | null) ?? null,
     avatar_url: (row.avatar_url as string | null) ?? null,
     email: (row.email as string | null) ?? null,
+    email_opt_out: Boolean(row.email_opt_out ?? false),
     wins: Number(row.wins ?? 0),
     losses: Number(row.losses ?? 0),
     ties: Number(row.ties ?? 0),

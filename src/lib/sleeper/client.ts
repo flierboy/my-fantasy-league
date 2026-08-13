@@ -97,6 +97,55 @@ export async function fetchSleeperNflState(): Promise<SleeperNflState> {
   return sleeperGet<SleeperNflState>("/state/nfl");
 }
 
+/** Weekly matchup scores (one entry per roster; pair by matchup_id). */
+export type SleeperMatchup = {
+  roster_id: number;
+  matchup_id: number | null;
+  points?: number | null;
+  custom_points?: number | null;
+  starters?: string[] | null;
+  players?: string[] | null;
+  starters_points?: number[] | null;
+};
+
+/**
+ * Free-agent / waiver / trade transactions for a week (round).
+ * `round` is typically the NFL week number.
+ */
+export type SleeperTransaction = {
+  type: string;
+  status: string;
+  roster_ids?: number[] | null;
+  adds?: Record<string, number> | null;
+  drops?: Record<string, number> | null;
+  draft_picks?: unknown[] | null;
+  waiver_budget?: { sender: number; receiver: number; amount: number }[] | null;
+  status_updated?: number | null;
+  created?: number | null;
+  leg?: number | null;
+  consenter_ids?: number[] | null;
+  creator?: string | null;
+  transaction_id?: string | null;
+};
+
+export async function fetchSleeperMatchups(
+  leagueId: string,
+  week: number
+): Promise<SleeperMatchup[]> {
+  return sleeperGet<SleeperMatchup[]>(
+    `/league/${leagueId}/matchups/${week}`
+  );
+}
+
+export async function fetchSleeperTransactions(
+  leagueId: string,
+  week: number
+): Promise<SleeperTransaction[]> {
+  return sleeperGet<SleeperTransaction[]>(
+    `/league/${leagueId}/transactions/${week}`
+  );
+}
+
 export function sleeperPoints(settings?: SleeperRoster["settings"]): number {
   if (!settings) return 0;
   const whole = Number(settings.fpts ?? 0);

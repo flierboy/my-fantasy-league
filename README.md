@@ -31,7 +31,9 @@ Design inspired by [Fake Football 2k26](https://fakefootball.thebaseballdad.com/
   - League settings
   - Matchups & standings
   - Dues paid/unpaid
-  - Poll create / open / close
+  - Poll create / open / close (+ optional email to owners)
+  - Announcements (+ optional email to owners)
+  - Sleeper sync + weekly results email
   - Trash talk moderation
 
 ### Auth
@@ -73,9 +75,17 @@ In `.env.local` (and Vercel project settings for deploy):
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
+
+# Email (Resend) — optional until you send polls / weekly results
+RESEND_API_KEY=re_xxxxxxxx
+EMAIL_FROM=Upper Deckcers <onboarding@resend.dev>
+NEXT_PUBLIC_SITE_URL=https://your-domain.com
 ```
 
-Find these under **Project Settings → API**.
+Find Supabase keys under **Project Settings → API**.  
+Resend: [resend.com](https://resend.com) → API Keys. Use `onboarding@resend.dev` for testing; verify your domain for production.
+
+Also run `supabase/migrate-email.sql` for announcements + `owners.email_opt_out`.
 
 ### 3. Disable public sign-ups
 

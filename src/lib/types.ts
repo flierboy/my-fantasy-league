@@ -76,6 +76,11 @@ export interface Owner {
   team_name: string | null;
   avatar_url: string | null;
   email: string | null;
+  /**
+   * When true, exclude from poll/announcement/weekly emails.
+   * Optional until migrate-email.sql is applied.
+   */
+  email_opt_out?: boolean;
   wins: number;
   losses: number;
   ties: number;

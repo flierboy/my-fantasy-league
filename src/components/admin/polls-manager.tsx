@@ -52,6 +52,22 @@ export function PollsManager({
               placeholder={"Beer\nPizza\nBoth"}
             />
           </Field>
+          <label className="flex items-start gap-2 text-sm font-semibold">
+            <input
+              type="checkbox"
+              name="email_owners"
+              value="on"
+              defaultChecked
+              className="mt-0.5 h-4 w-4 accent-foreground"
+            />
+            <span>
+              Email all owners
+              <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                Sends to every owner with an email on file (respects opt-out).
+                Requires RESEND_API_KEY.
+              </span>
+            </span>
+          </label>
           <SubmitButton>Create poll</SubmitButton>
         </ActionForm>
       </section>

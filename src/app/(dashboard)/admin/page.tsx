@@ -84,7 +84,13 @@ const SECTIONS = [
     href: "/admin/polls",
     icon: "📊",
     title: "Polls",
-    blurb: "Create, close, results",
+    blurb: "Create, close, email owners",
+  },
+  {
+    href: "/admin/announcements",
+    icon: "📣",
+    title: "Announcements",
+    blurb: "Post news + email owners",
   },
   {
     href: "/admin/trash-talk",
