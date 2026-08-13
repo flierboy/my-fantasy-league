@@ -6,7 +6,7 @@ interface SiteFooterProps {
 
 export function SiteFooter({ league }: SiteFooterProps) {
   return (
-    <footer className="border-t-2 border-foreground/15 bg-white/40 py-5 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+    <footer className="border-t-2 border-foreground/20 bg-white/92 py-5 text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground backdrop-blur-sm">
       {league.name} · Private league · {league.season_year}
     </footer>
   );

@@ -65,15 +65,89 @@ html {
 }
 
 body {
-  background-color: var(--background);
-  /* subtle paper grain */
-  background-image:
-    radial-gradient(ellipse at 20% 0%, rgba(240, 193, 75, 0.06), transparent 50%),
-    radial-gradient(ellipse at 80% 100%, rgba(201, 162, 39, 0.05), transparent 45%);
+  /* Base falls back to paper if media not ready; atmospheric layer paints over */
+  background-color: #0c0c0c;
   color: var(--foreground);
   font-family: var(--font-body), "Helvetica Neue", Helvetica, Arial, sans-serif;
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+
+/* ---------- Atmospheric full-bleed background ---------- */
+.ff-site-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: #0c0c0c;
+}
+
+.ff-site-bg__still,
+.ff-site-bg__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.ff-site-bg__video {
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.ff-site-bg__video.is-active {
+  opacity: 1;
+  z-index: 1;
+}
+
+.ff-site-bg__still {
+  z-index: 0;
+}
+
+.ff-site-bg__still--under-video {
+  z-index: 0;
+}
+
+/* Dark wash so white paper cards stay readable */
+.ff-site-bg__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(12, 12, 12, 0.55) 0%,
+      rgba(12, 12, 12, 0.45) 40%,
+      rgba(12, 12, 12, 0.62) 100%
+    ),
+    radial-gradient(
+      ellipse at 50% 20%,
+      rgba(201, 162, 39, 0.08),
+      transparent 55%
+    );
+}
+
+/* Content sits above background */
+.ff-app-shell {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+}
+
+/* Solid / frosted header so nav stays bright on video */
+.ff-nav {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 2px solid #141414;
+  box-shadow: 0 1px 0 rgba(201, 162, 39, 0.2);
 }
 
 /* ---------- Display type ---------- */
@@ -96,12 +170,6 @@ body {
   );
   height: 4px;
   flex-shrink: 0;
-}
-
-.ff-nav {
-  background: var(--nav);
-  border-bottom: 2px solid #141414;
-  box-shadow: 0 1px 0 rgba(201, 162, 39, 0.15);
 }
 
 /* Ribbon / pennant section kicker */
@@ -220,7 +288,9 @@ body {
 
 /* Secondary nav under main header */
 .ff-subnav {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-bottom: 2px solid #141414;
 }
 
