@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 const LINKS = [
   { href: "/admin", label: "Overview", exact: true },
   { href: "/admin/owners", label: "Owners" },
+  { href: "/admin/owners/bulk", label: "Bulk owners" },
   { href: "/admin/settings", label: "Settings" },
   { href: "/admin/history", label: "History" },
   { href: "/admin/import-espn", label: "ESPN import" },

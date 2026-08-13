@@ -57,6 +57,12 @@ export function PlayerCard({
         </span>
       )}
 
+      {owner.favorite_nfl_team && (
+        <p className="mt-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+          NFL · {owner.favorite_nfl_team}
+        </p>
+      )}
+
       <p className="mt-2 font-mono text-sm font-bold tabular-nums">
         {formatRecord(owner.wins, owner.losses, owner.ties)}
       </p>
@@ -104,6 +110,7 @@ export function PlayerListRow({ owner }: { owner: Owner }) {
         </div>
         <p className="mt-0.5 truncate text-xs font-semibold text-muted-foreground">
           {owner.team_name || "—"}
+          {owner.favorite_nfl_team ? ` · ${owner.favorite_nfl_team}` : ""}
           {" · "}
           <span className="font-mono tabular-nums">
             {formatRecord(owner.wins, owner.losses, owner.ties)}

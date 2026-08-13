@@ -92,8 +92,9 @@ export async function getPublicLeagueData(): Promise<{
         )
       : [];
 
-    // Until seed-upper-deckers.sql is applied, serve the real league seed.
-    if (!isUpperDeckersRoster(liveOwners)) {
+    // Empty DB → local seed. Once any owners exist, always use live rows so
+    // bulk admin edits (names, avatars, roles) show on /players and homepage.
+    if (!hasOwners) {
       return {
         league: FALLBACK_LEAGUE,
         owners: FALLBACK_OWNERS,
@@ -112,11 +113,20 @@ export async function getPublicLeagueData(): Promise<{
         league.name.trim().toLowerCase() === "upper deckers"
           ? "Upper Deckcers"
           : league.name,
-      rules_summary: league.rules_summary.includes("August 30")
-        ? league.rules_summary
-        : FALLBACK_LEAGUE.rules_summary,
+      rules_summary:
+        league.rules_summary && league.rules_summary.trim().length > 0
+          ? league.rules_summary
+          : FALLBACK_LEAGUE.rules_summary,
       draft_at: league.draft_at || FALLBACK_LEAGUE.draft_at,
     };
+
+    // Soft hint in logs if roster still looks like the old demo seed
+    if (!isUpperDeckersRoster(liveOwners) && liveOwners.length < 8) {
+      console.info(
+        "[league] Live owners loaded (%d). Run seed-upper-deckers.sql if this is a fresh project.",
+        liveOwners.length
+      );
+    }
 
     return {
       league: normalized,

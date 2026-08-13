@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getOwners } from "@/lib/data/league";
 import { OwnersManager } from "@/components/admin/owners-manager";
 
@@ -17,6 +18,14 @@ export default async function AdminOwnersPage() {
         <p className="mt-2 text-sm text-muted-foreground">
           Edit names, all-time W-L, prize money, badges, draft order, admin flag,
           and auth user links.
+        </p>
+        <p className="mt-3">
+          <Link
+            href="/admin/owners/bulk"
+            className="inline-flex items-center rounded-lg border-2 border-foreground bg-[var(--banner)] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white shadow-sm transition-opacity hover:opacity-90"
+          >
+            ⚡ Bulk editor — set up all {sorted.length} owners
+          </Link>
         </p>
       </header>
       <OwnersManager owners={sorted} />

@@ -14,6 +14,7 @@ function revalidateOwners() {
   revalidatePath("/players");
   revalidatePath("/admin");
   revalidatePath("/admin/owners");
+  revalidatePath("/admin/owners/bulk");
   revalidatePath("/dashboard");
   revalidatePath("/matchups");
   revalidatePath("/dues");
@@ -21,6 +22,59 @@ function revalidateOwners() {
   revalidatePath("/badges");
   revalidatePath("/admin/matchups");
   revalidatePath("/admin/dues");
+}
+
+type OwnerWritePayload = {
+  display_name: string;
+  team_name: string | null;
+  role: string | null;
+  email: string | null;
+  avatar_url: string | null;
+  wins?: number;
+  losses?: number;
+  ties?: number;
+  prize_money: number;
+  draft_slot?: number | null;
+  sort_order?: number;
+  is_admin: boolean;
+  badges?: BadgeKey[];
+  user_id?: string | null;
+  favorite_nfl_team: string | null;
+  sleeper_username: string | null;
+};
+
+/** Retry without optional columns if migrations not applied yet. */
+async function updateOwnerRow(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  id: string,
+  payload: OwnerWritePayload
+) {
+  let { error } = await supabase.from("owners").update(payload).eq("id", id);
+  if (!error) return { error: null as string | null, stripped: [] as string[] };
+
+  const stripped: string[] = [];
+  let next: Record<string, unknown> = { ...payload };
+
+  if (error.message.includes("favorite_nfl_team")) {
+    delete next.favorite_nfl_team;
+    stripped.push("favorite_nfl_team");
+    ({ error } = await supabase.from("owners").update(next).eq("id", id));
+  }
+  if (error?.message.includes("sleeper_username")) {
+    delete next.sleeper_username;
+    stripped.push("sleeper_username");
+    ({ error } = await supabase.from("owners").update(next).eq("id", id));
+  }
+  if (error?.message.includes("role")) {
+    delete next.role;
+    stripped.push("role");
+    ({ error } = await supabase.from("owners").update(next).eq("id", id));
+  }
+
+  return {
+    error: error?.message ?? null,
+    stripped,
+  };
 }
 
 function parseBadges(formData: FormData): BadgeKey[] {
@@ -79,9 +133,13 @@ export async function createOwner(formData: FormData): Promise<ActionResult> {
   const badges = parseBadges(formData);
   const user_id_raw = String(formData.get("user_id") ?? "").trim();
   const user_id = user_id_raw || null;
+  const favorite_nfl_team =
+    String(formData.get("favorite_nfl_team") ?? "").trim() || null;
+  const sleeper_username =
+    String(formData.get("sleeper_username") ?? "").trim() || null;
 
   const supabase = await createClient();
-  const payload = {
+  const payload: OwnerWritePayload = {
     display_name,
     team_name,
     role,
@@ -96,13 +154,25 @@ export async function createOwner(formData: FormData): Promise<ActionResult> {
     is_admin,
     badges,
     user_id,
+    favorite_nfl_team,
+    sleeper_username,
   };
   let { error } = await supabase.from("owners").insert(payload);
 
-  // If role column not migrated yet, retry without it
+  // Drop optional columns if migrations not applied yet
+  if (error?.message?.includes("favorite_nfl_team")) {
+    const { favorite_nfl_team: _f, ...rest } = payload;
+    ({ error } = await supabase.from("owners").insert(rest));
+  }
+  if (error?.message?.includes("sleeper_username")) {
+    const { sleeper_username: _s, ...rest } = payload;
+    const { favorite_nfl_team: _f, ...rest2 } = rest as OwnerWritePayload;
+    ({ error } = await supabase.from("owners").insert(rest2));
+  }
   if (error?.message?.includes("role")) {
-    const { role: _r, ...withoutRole } = payload;
-    ({ error } = await supabase.from("owners").insert(withoutRole));
+    const { role: _r, favorite_nfl_team: _f, sleeper_username: _s, ...rest } =
+      payload;
+    ({ error } = await supabase.from("owners").insert(rest));
   }
 
   if (error) return fail(error.message);
@@ -153,13 +223,17 @@ export async function updateOwner(formData: FormData): Promise<ActionResult> {
   const badges = parseBadges(formData);
   const user_id_raw = String(formData.get("user_id") ?? "").trim();
   const user_id = user_id_raw === "" ? null : user_id_raw;
+  const favorite_nfl_team =
+    String(formData.get("favorite_nfl_team") ?? "").trim() || null;
+  const sleeper_username =
+    String(formData.get("sleeper_username") ?? "").trim() || null;
 
   if (id === gate.owner.id && !is_admin) {
     return fail("You cannot remove admin from your own account");
   }
 
   const supabase = await createClient();
-  const payload = {
+  const payload: OwnerWritePayload = {
     display_name,
     team_name,
     role,
@@ -174,25 +248,131 @@ export async function updateOwner(formData: FormData): Promise<ActionResult> {
     is_admin,
     badges,
     user_id,
+    favorite_nfl_team,
+    sleeper_username,
   };
-  let { error } = await supabase.from("owners").update(payload).eq("id", id);
+  const result = await updateOwnerRow(supabase, id, payload);
 
-  if (error?.message?.includes("role")) {
-    const { role: _r, ...withoutRole } = payload;
-    ({ error } = await supabase
-      .from("owners")
-      .update(withoutRole)
-      .eq("id", id));
-    if (!error) {
-      return fail(
-        "Saved without role — run supabase/migrate-owner-role.sql to enable the role column"
-      );
-    }
+  if (result.error) return fail(result.error);
+  if (result.stripped.length) {
+    revalidateOwners();
+    return ok(
+      `Owner updated (missing columns skipped: ${result.stripped.join(", ")} — run migrate-owner-bulk-fields.sql / migrate-owner-role.sql)`
+    );
   }
-
-  if (error) return fail(error.message);
   revalidateOwners();
   return ok("Owner updated");
+}
+
+export type BulkOwnerRow = {
+  id: string;
+  display_name: string;
+  team_name: string;
+  email: string;
+  avatar_url: string;
+  role: string;
+  prize_money: number | string;
+  favorite_nfl_team: string;
+  sleeper_username: string;
+  is_admin: boolean;
+};
+
+/**
+ * Save many owners in one shot (bulk league setup).
+ * Expects FormData field `payload` = JSON array of BulkOwnerRow.
+ */
+export async function bulkUpdateOwners(
+  formData: FormData
+): Promise<ActionResult> {
+  const gate = await requireAdmin();
+  if (!gate.ok) return fail(gate.error);
+
+  const raw = String(formData.get("payload") ?? "").trim();
+  if (!raw) return fail("No owner payload provided");
+
+  let rows: BulkOwnerRow[];
+  try {
+    rows = JSON.parse(raw) as BulkOwnerRow[];
+  } catch {
+    return fail("Invalid bulk payload JSON");
+  }
+
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return fail("Payload must be a non-empty array of owners");
+  }
+
+  const adminId = gate.owner.id;
+  const wouldStripSelfAdmin = rows.some(
+    (r) => r.id === adminId && !r.is_admin
+  );
+  if (wouldStripSelfAdmin) {
+    return fail("You cannot remove admin from your own account");
+  }
+
+  const supabase = await createClient();
+  let updated = 0;
+  const errors: string[] = [];
+  const strippedHints = new Set<string>();
+
+  for (const row of rows) {
+    const id = String(row.id ?? "").trim();
+    if (!id) {
+      errors.push("Row missing id");
+      continue;
+    }
+    const display_name = String(row.display_name ?? "").trim();
+    if (!display_name) {
+      errors.push(`Row ${id}: display name required`);
+      continue;
+    }
+
+    const prizeRaw = row.prize_money;
+    const prize_money =
+      typeof prizeRaw === "number"
+        ? prizeRaw
+        : Number(String(prizeRaw ?? "0").replace(/[$,]/g, ""));
+    if (!Number.isFinite(prize_money) || prize_money < 0) {
+      errors.push(`${display_name}: invalid career cash`);
+      continue;
+    }
+
+    const payload: OwnerWritePayload = {
+      display_name,
+      team_name: String(row.team_name ?? "").trim() || null,
+      email: String(row.email ?? "").trim() || null,
+      avatar_url: String(row.avatar_url ?? "").trim() || null,
+      role: String(row.role ?? "").trim() || null,
+      prize_money,
+      favorite_nfl_team:
+        String(row.favorite_nfl_team ?? "").trim() || null,
+      sleeper_username:
+        String(row.sleeper_username ?? "").trim() || null,
+      is_admin: Boolean(row.is_admin),
+    };
+
+    const result = await updateOwnerRow(supabase, id, payload);
+    if (result.error) {
+      errors.push(`${display_name}: ${result.error}`);
+      continue;
+    }
+    result.stripped.forEach((c) => strippedHints.add(c));
+    updated += 1;
+  }
+
+  revalidateOwners();
+
+  if (updated === 0) {
+    return fail(errors.join("; ") || "No owners updated");
+  }
+
+  const parts = [`Saved ${updated} owner${updated === 1 ? "" : "s"}`];
+  if (errors.length) parts.push(`${errors.length} error(s): ${errors.join("; ")}`);
+  if (strippedHints.size) {
+    parts.push(
+      `Run supabase/migrate-owner-bulk-fields.sql for: ${[...strippedHints].join(", ")}`
+    );
+  }
+  return ok(parts.join(" · "));
 }
 
 export async function unlinkOwnerUser(formData: FormData): Promise<ActionResult> {
@@ -279,5 +459,5 @@ export async function uploadOwnerAvatar(
   if (updateError) return fail(updateError.message);
 
   revalidateOwners();
-  return ok("Avatar uploaded");
+  return ok("Avatar uploaded", { avatar_url: publicUrl });
 }

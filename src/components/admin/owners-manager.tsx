@@ -1,7 +1,7 @@
 "use client";
 
 import type { Owner } from "@/lib/types";
-import { OWNER_ROLE_OPTIONS } from "@/lib/types";
+import { NFL_TEAM_OPTIONS, OWNER_ROLE_OPTIONS } from "@/lib/types";
 import { BADGE_LIST } from "@/lib/data/badges";
 import {
   createOwner,
@@ -250,6 +250,33 @@ function OwnerFields({ owner }: { owner?: Owner }) {
           name="avatar_url"
           defaultValue={owner?.avatar_url ?? ""}
           placeholder="https://… or leave blank"
+          className={fieldInputClass}
+        />
+      </Field>
+      <Field label="Favorite NFL team" htmlFor={id(owner, "favorite_nfl_team")}>
+        <select
+          id={id(owner, "favorite_nfl_team")}
+          name="favorite_nfl_team"
+          defaultValue={owner?.favorite_nfl_team ?? ""}
+          className={fieldInputClass}
+        >
+          {NFL_TEAM_OPTIONS.map((t) => (
+            <option key={t || "none"} value={t}>
+              {t || "— None —"}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field
+        label="Sleeper username"
+        htmlFor={id(owner, "sleeper_username")}
+        hint="Used when matching Sleeper rosters"
+      >
+        <input
+          id={id(owner, "sleeper_username")}
+          name="sleeper_username"
+          defaultValue={owner?.sleeper_username ?? ""}
+          placeholder="sleeper username"
           className={fieldInputClass}
         />
       </Field>

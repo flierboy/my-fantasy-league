@@ -93,7 +93,12 @@ export function buildSleeperPreview(
 
 export function matchOwnerId(
   names: string[],
-  owners: { id: string; display_name: string; team_name: string | null }[]
+  owners: {
+    id: string;
+    display_name: string;
+    team_name: string | null;
+    sleeper_username?: string | null;
+  }[]
 ): string | null {
   const candidates = names
     .map((n) => normalizeName(n))
@@ -103,6 +108,9 @@ export function matchOwnerId(
     for (const o of owners) {
       if (normalizeName(o.display_name) === n) return o.id;
       if (o.team_name && normalizeName(o.team_name) === n) return o.id;
+      if (o.sleeper_username && normalizeName(o.sleeper_username) === n) {
+        return o.id;
+      }
     }
   }
 
@@ -110,8 +118,12 @@ export function matchOwnerId(
     for (const o of owners) {
       const od = normalizeName(o.display_name);
       const ot = o.team_name ? normalizeName(o.team_name) : "";
+      const os = o.sleeper_username
+        ? normalizeName(o.sleeper_username)
+        : "";
       if (od && (n.includes(od) || od.includes(n))) return o.id;
       if (ot && (n.includes(ot) || ot.includes(n))) return o.id;
+      if (os && (n.includes(os) || os.includes(n))) return o.id;
     }
   }
 

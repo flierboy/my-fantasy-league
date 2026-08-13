@@ -25,6 +25,8 @@ create table if not exists public.owners (
   badges text[] not null default '{}',
   is_admin boolean not null default false,
   role text,
+  favorite_nfl_team text,
+  sleeper_username text,
   draft_slot int unique check (draft_slot is null or draft_slot between 1 and 20),
   sort_order int not null default 0,
   created_at timestamptz not null default now(),

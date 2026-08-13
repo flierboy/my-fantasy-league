@@ -21,6 +21,12 @@ const SECTIONS = [
     blurb: "Records, badges, draft, logins",
   },
   {
+    href: "/admin/owners/bulk",
+    icon: "⚡",
+    title: "Bulk owners",
+    blurb: "Edit all 10 owners at once",
+  },
+  {
     href: "/admin/settings",
     icon: "🏈",
     title: "Settings",

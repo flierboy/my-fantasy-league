@@ -56,6 +56,14 @@ export function mapOwner(row: Record<string, unknown>): Owner {
     badges,
     is_admin,
     role,
+    favorite_nfl_team:
+      row.favorite_nfl_team == null || String(row.favorite_nfl_team).trim() === ""
+        ? null
+        : String(row.favorite_nfl_team).trim(),
+    sleeper_username:
+      row.sleeper_username == null || String(row.sleeper_username).trim() === ""
+        ? null
+        : String(row.sleeper_username).trim(),
     draft_slot: row.draft_slot == null ? null : Number(row.draft_slot),
     sort_order: Number(row.sort_order ?? 0),
   };

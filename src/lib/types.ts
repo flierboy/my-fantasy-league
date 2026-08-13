@@ -44,6 +44,10 @@ export interface Owner {
    * (Commissioner, Co-Commissioner, Owner, etc.)
    */
   role: string | null;
+  /** Favorite NFL team abbr/name (e.g. KC, DAL) */
+  favorite_nfl_team: string | null;
+  /** Sleeper username/display for roster matching */
+  sleeper_username: string | null;
   draft_slot: number | null;
   sort_order: number;
 }
@@ -56,6 +60,43 @@ export const OWNER_ROLE_OPTIONS = [
   "Owner",
   "Rookie",
   "IT",
+] as const;
+
+/** NFL team abbreviations for favorite team picker */
+export const NFL_TEAM_OPTIONS = [
+  "",
+  "ARI",
+  "ATL",
+  "BAL",
+  "BUF",
+  "CAR",
+  "CHI",
+  "CIN",
+  "CLE",
+  "DAL",
+  "DEN",
+  "DET",
+  "GB",
+  "HOU",
+  "IND",
+  "JAX",
+  "KC",
+  "LAC",
+  "LAR",
+  "LV",
+  "MIA",
+  "MIN",
+  "NE",
+  "NO",
+  "NYG",
+  "NYJ",
+  "PHI",
+  "PIT",
+  "SEA",
+  "SF",
+  "TB",
+  "TEN",
+  "WAS",
 ] as const;
 
 export interface DraftSlot {
