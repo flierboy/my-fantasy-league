@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { PublicPageShell } from "@/components/layout/public-page-shell";
-import { getOwners } from "@/lib/data/league";
+import { getLeagueSettings, getOwners } from "@/lib/data/league";
 import { ALL_TIME_BLURB, getHistoryEntries, groupHistory } from "@/lib/data/history";
-import { getPastSeasons } from "@/lib/data/seasons";
-import { formatRecord } from "@/lib/utils";
+import {
+  buildCareerFranchiseStats,
+  getCurrentSeasonStandingsByOwner,
+  getPastSeasons,
+} from "@/lib/data/seasons";
+import { formatPoints, formatRecord, formatWinPct } from "@/lib/utils";
 import { OwnerAvatar } from "@/components/home/owner-avatar";
 
 export const metadata = {
@@ -13,17 +17,29 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function HistoryPage() {
-  const [{ entries, source }, owners, { seasons }] = await Promise.all([
+  const [{ entries, source }, owners, { seasons }, league] = await Promise.all([
     getHistoryEntries(),
     getOwners(),
     getPastSeasons({ withStandings: true }),
+    getLeagueSettings(),
   ]);
 
   const { champions, milestones, records, notes } = groupHistory(entries);
 
+  const currentByOwner = await getCurrentSeasonStandingsByOwner(
+    league.season_year
+  );
+  const career = buildCareerFranchiseStats(owners, seasons, {
+    currentByOwner,
+    currentSeasonYear: league.season_year,
+  });
+
   const sorted = [...owners].sort((a, b) => {
-    if (b.wins !== a.wins) return b.wins - a.wins;
-    if (a.losses !== b.losses) return a.losses - b.losses;
+    const ca = career.get(a.id)!;
+    const cb = career.get(b.id)!;
+    if (cb.wins !== ca.wins) return cb.wins - ca.wins;
+    if (ca.losses !== cb.losses) return ca.losses - cb.losses;
+    if (cb.points_for !== ca.points_for) return cb.points_for - ca.points_for;
     return a.sort_order - b.sort_order;
   });
 
@@ -138,10 +154,13 @@ export default async function HistoryPage() {
                             <th className="px-3 py-3 text-right sm:px-4">
                               W-L-T
                             </th>
-                            <th className="hidden px-3 py-3 text-right sm:table-cell sm:px-4">
+                            <th className="px-3 py-3 text-right sm:px-4">
+                              Win%
+                            </th>
+                            <th className="px-3 py-3 text-right sm:px-4">
                               PF
                             </th>
-                            <th className="hidden px-3 py-3 text-right md:table-cell md:px-4">
+                            <th className="hidden px-3 py-3 text-right sm:table-cell sm:px-4">
                               PA
                             </th>
                           </tr>
@@ -209,11 +228,18 @@ export default async function HistoryPage() {
                                     row.ties
                                   )}
                                 </td>
-                                <td className="hidden px-3 py-3 text-right font-mono tabular-nums sm:table-cell sm:px-4">
-                                  {row.points_for.toFixed(1)}
+                                <td className="px-3 py-3 text-right font-mono tabular-nums sm:px-4">
+                                  {formatWinPct(
+                                    row.wins,
+                                    row.losses,
+                                    row.ties
+                                  )}
                                 </td>
-                                <td className="hidden px-3 py-3 text-right font-mono tabular-nums text-muted-foreground md:table-cell md:px-4">
-                                  {row.points_against.toFixed(1)}
+                                <td className="px-3 py-3 text-right font-mono tabular-nums sm:px-4">
+                                  {formatPoints(row.points_for)}
+                                </td>
+                                <td className="hidden px-3 py-3 text-right font-mono tabular-nums text-muted-foreground sm:table-cell sm:px-4">
+                                  {formatPoints(row.points_against)}
                                 </td>
                               </tr>
                             );
@@ -351,52 +377,74 @@ export default async function HistoryPage() {
           </section>
         )}
 
-        {/* Live franchise table from owners */}
+        {/* Franchise table — career from past seasons (+ current if available) */}
         <section>
           <p className="ff-ribbon text-[10px] !px-3 !py-1">Franchise</p>
           <h2 className="ff-display mt-2.5 text-2xl">Franchise standings</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Live all-time W-L from owner records (editable under Admin → Owners).
+            All-time from past season standings (PF / PA / Win%). Falls back to
+            owner W-L when no past rows exist. Sorted by wins, then PF.
           </p>
-          <div className="ff-card mt-4 overflow-hidden">
-            <table className="w-full text-sm">
+          <div className="ff-card mt-4 overflow-x-auto">
+            <table className="w-full min-w-[520px] text-sm">
               <thead className="border-b-2 border-foreground bg-[#f4f2ef] text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 <tr>
-                  <th className="px-4 py-3">#</th>
-                  <th className="px-4 py-3">Owner</th>
-                  <th className="px-4 py-3 text-right">W-L</th>
-                  <th className="hidden px-4 py-3 text-right sm:table-cell">
+                  <th className="px-3 py-3 sm:px-4">#</th>
+                  <th className="px-3 py-3 sm:px-4">Owner</th>
+                  <th className="px-3 py-3 text-right sm:px-4">W-L-T</th>
+                  <th className="px-3 py-3 text-right sm:px-4">Win%</th>
+                  <th className="px-3 py-3 text-right sm:px-4">PF</th>
+                  <th className="px-3 py-3 text-right sm:px-4">PA</th>
+                  <th className="hidden px-3 py-3 text-right sm:table-cell sm:px-4">
                     Prize $
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {sorted.map((owner, idx) => (
-                  <tr key={owner.id}>
-                    <td className="px-4 py-3 font-mono font-bold">{idx + 1}</td>
-                    <td className="px-4 py-3">
-                      <Link
-                        href={`/players/${owner.id}`}
-                        className="flex items-center gap-2 hover:underline"
-                      >
-                        <OwnerAvatar
-                          name={owner.display_name}
-                          src={owner.avatar_url}
-                          size="sm"
-                        />
-                        <span className="ff-display text-sm">
-                          {owner.display_name}
-                        </span>
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-right font-mono font-bold tabular-nums">
-                      {formatRecord(owner.wins, owner.losses, owner.ties)}
-                    </td>
-                    <td className="hidden px-4 py-3 text-right font-mono text-muted-foreground sm:table-cell">
-                      ${owner.prize_money.toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
+                {sorted.map((owner, idx) => {
+                  const c = career.get(owner.id)!;
+                  return (
+                    <tr key={owner.id}>
+                      <td className="px-3 py-3 font-mono font-bold sm:px-4">
+                        {idx + 1}
+                      </td>
+                      <td className="px-3 py-3 sm:px-4">
+                        <Link
+                          href={`/players/${owner.id}`}
+                          className="flex items-center gap-2 hover:underline"
+                        >
+                          <OwnerAvatar
+                            name={owner.display_name}
+                            src={owner.avatar_url}
+                            size="sm"
+                          />
+                          <span className="ff-display text-sm">
+                            {owner.display_name}
+                          </span>
+                        </Link>
+                      </td>
+                      <td className="px-3 py-3 text-right font-mono font-bold tabular-nums sm:px-4">
+                        {formatRecord(c.wins, c.losses, c.ties)}
+                      </td>
+                      <td className="px-3 py-3 text-right font-mono tabular-nums sm:px-4">
+                        {formatWinPct(c.wins, c.losses, c.ties)}
+                      </td>
+                      <td className="px-3 py-3 text-right font-mono tabular-nums sm:px-4">
+                        {c.from_owner_fallback && c.points_for === 0
+                          ? "—"
+                          : formatPoints(c.points_for)}
+                      </td>
+                      <td className="px-3 py-3 text-right font-mono tabular-nums text-muted-foreground sm:px-4">
+                        {c.from_owner_fallback && c.points_against === 0
+                          ? "—"
+                          : formatPoints(c.points_against)}
+                      </td>
+                      <td className="hidden px-3 py-3 text-right font-mono text-muted-foreground sm:table-cell sm:px-4">
+                        ${owner.prize_money.toLocaleString()}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

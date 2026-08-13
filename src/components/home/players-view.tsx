@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 import type { Owner } from "@/lib/types";
+import type { CareerFranchiseStats } from "@/lib/data/seasons";
 import { PlayerCard, PlayerListRow } from "./player-card";
 import { cn } from "@/lib/utils";
 
 interface PlayersViewProps {
   owners: Owner[];
+  /** Career stats keyed by owner id (from past seasons) */
+  careerByOwner?: Record<string, CareerFranchiseStats>;
   /** Show section header (homepage) */
   showHeader?: boolean;
   defaultView?: "grid" | "list";
@@ -17,6 +20,7 @@ interface PlayersViewProps {
  */
 export function PlayersView({
   owners,
+  careerByOwner,
   showHeader = true,
   defaultView = "grid",
 }: PlayersViewProps) {
@@ -37,7 +41,7 @@ export function PlayersView({
               Players
             </h2>
             <p className="mt-1.5 text-sm text-muted-foreground">
-              Franchise cards · cash · badges · all-time W-L
+              Franchise cards · cash · badges · career W-L · Win% · PF/PA
             </p>
           </div>
         ) : (
@@ -66,13 +70,21 @@ export function PlayersView({
       ) : view === "grid" ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
           {sorted.map((owner) => (
-            <PlayerCard key={owner.id} owner={owner} />
+            <PlayerCard
+              key={owner.id}
+              owner={owner}
+              career={careerByOwner?.[owner.id]}
+            />
           ))}
         </div>
       ) : (
         <ol className="ff-card divide-y-2 divide-border overflow-hidden">
           {sorted.map((owner) => (
-            <PlayerListRow key={owner.id} owner={owner} />
+            <PlayerListRow
+              key={owner.id}
+              owner={owner}
+              career={careerByOwner?.[owner.id]}
+            />
           ))}
         </ol>
       )}

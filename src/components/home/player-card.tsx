@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Owner } from "@/lib/types";
-import { formatRecord } from "@/lib/utils";
+import type { CareerFranchiseStats } from "@/lib/data/seasons";
+import { formatPoints, formatRecord, formatWinPct } from "@/lib/utils";
 import { OwnerAvatar } from "./owner-avatar";
 import { OwnerBadge } from "./owner-badge";
 import { MoneyChip } from "./money-chip";
@@ -11,6 +12,8 @@ interface PlayerCardProps {
   /** denser card for homepage strip */
   compact?: boolean;
   className?: string;
+  /** Career totals from past seasons; falls back to owner W-L */
+  career?: CareerFranchiseStats;
 }
 
 /**
@@ -20,9 +23,18 @@ export function PlayerCard({
   owner,
   compact = false,
   className,
+  career,
 }: PlayerCardProps) {
   const role = owner.role;
   const href = `/players/${owner.id}`;
+  const wins = career?.wins ?? owner.wins;
+  const losses = career?.losses ?? owner.losses;
+  const ties = career?.ties ?? owner.ties;
+  const showPf =
+    career &&
+    (!career.from_owner_fallback ||
+      career.points_for > 0 ||
+      career.points_against > 0);
 
   return (
     <article
@@ -69,9 +81,18 @@ export function PlayerCard({
       )}
 
       <p className="mt-2 font-mono text-sm font-bold tabular-nums">
-        {formatRecord(owner.wins, owner.losses, owner.ties)}
+        {formatRecord(wins, losses, ties)}
       </p>
-      <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+      <p className="font-mono text-[11px] font-semibold tabular-nums text-muted-foreground">
+        {formatWinPct(wins, losses, ties)}
+      </p>
+      {showPf && career && (
+        <p className="mt-1 font-mono text-[10px] tabular-nums text-muted-foreground">
+          PF {formatPoints(career.points_for)} · PA{" "}
+          {formatPoints(career.points_against)}
+        </p>
+      )}
+      <p className="mt-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
         Franchise all-time
       </p>
 
@@ -91,8 +112,23 @@ export function PlayerCard({
 }
 
 /** Horizontal roster row for list view */
-export function PlayerListRow({ owner }: { owner: Owner }) {
+export function PlayerListRow({
+  owner,
+  career,
+}: {
+  owner: Owner;
+  career?: CareerFranchiseStats;
+}) {
   const href = `/players/${owner.id}`;
+  const wins = career?.wins ?? owner.wins;
+  const losses = career?.losses ?? owner.losses;
+  const ties = career?.ties ?? owner.ties;
+  const showPf =
+    career &&
+    (!career.from_owner_fallback ||
+      career.points_for > 0 ||
+      career.points_against > 0);
+
   return (
     <li className="flex items-center gap-3 px-3 py-3 sm:gap-4 sm:px-5 sm:py-3.5">
       <Link href={href}>
@@ -124,8 +160,24 @@ export function PlayerListRow({ owner }: { owner: Owner }) {
           {owner.favorite_nfl_team ? ` · ${owner.favorite_nfl_team}` : ""}
           {" · "}
           <span className="font-mono tabular-nums">
-            {formatRecord(owner.wins, owner.losses, owner.ties)}
+            {formatRecord(wins, losses, ties)}
           </span>
+          {" · "}
+          <span className="font-mono tabular-nums">
+            {formatWinPct(wins, losses, ties)}
+          </span>
+          {showPf && career && (
+            <>
+              {" · "}
+              <span className="font-mono tabular-nums">
+                PF {formatPoints(career.points_for)}
+              </span>
+              {" · "}
+              <span className="font-mono tabular-nums">
+                PA {formatPoints(career.points_against)}
+              </span>
+            </>
+          )}
         </p>
       </div>
       <MoneyChip amount={owner.prize_money} className="shrink-0" />

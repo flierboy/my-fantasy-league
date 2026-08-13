@@ -1,6 +1,12 @@
 import { PublicPageShell } from "@/components/layout/public-page-shell";
 import { PlayersView } from "@/components/home/players-view";
 import { getOwners, getLeagueSettings } from "@/lib/data/league";
+import {
+  buildCareerFranchiseStats,
+  getCurrentSeasonStandingsByOwner,
+  getPastSeasons,
+  type CareerFranchiseStats,
+} from "@/lib/data/seasons";
 
 export const metadata = {
   title: "Players",
@@ -12,10 +18,25 @@ export const dynamic = "force-dynamic";
  * Public Players / Owners page — centerpiece roster cards.
  */
 export default async function PlayersPage() {
-  const [owners, league] = await Promise.all([
+  const [owners, league, { seasons }] = await Promise.all([
     getOwners(),
     getLeagueSettings(),
+    getPastSeasons({ withStandings: true }),
   ]);
+
+  const currentByOwner = await getCurrentSeasonStandingsByOwner(
+    league.season_year
+  );
+  const careerMap = buildCareerFranchiseStats(owners, seasons, {
+    currentByOwner,
+    currentSeasonYear: league.season_year,
+  });
+
+  // Serialize Map for client component props
+  const careerByOwner: Record<string, CareerFranchiseStats> = {};
+  for (const [id, stats] of careerMap) {
+    careerByOwner[id] = stats;
+  }
 
   return (
     <PublicPageShell>
@@ -28,14 +49,19 @@ export default async function PlayersPage() {
               Players
             </h1>
             <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-              {league.name} owners — photos, teams, roles, career cash, and
-              badges. {owners.length} franchise
+              {league.name} owners — photos, teams, roles, career Win% / PF /
+              PA, cash, and badges. {owners.length} franchise
               {owners.length === 1 ? "" : "s"} in the book.
             </p>
           </div>
         </header>
 
-        <PlayersView owners={owners} showHeader={false} defaultView="grid" />
+        <PlayersView
+          owners={owners}
+          careerByOwner={careerByOwner}
+          showHeader={false}
+          defaultView="grid"
+        />
       </div>
     </PublicPageShell>
   );
