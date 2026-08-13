@@ -168,7 +168,7 @@ export default async function MatchupsPage() {
 
 function EmptyCard({ message }: { message: string }) {
   return (
-    <div className="rounded-xl border-2 border-dashed border-border bg-white/60 p-6 text-center text-sm text-muted-foreground">
+    <div className="rounded-xl border-2 border-dashed border-border bg-white p-6 text-center text-sm text-muted-foreground">
       {message}
     </div>
   );

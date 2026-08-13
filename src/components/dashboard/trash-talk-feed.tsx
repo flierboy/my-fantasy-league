@@ -54,7 +54,7 @@ export function TrashTalkFeed({ initialPosts }: TrashTalkFeedProps) {
 
   if (posts.length === 0) {
     return (
-      <div className="rounded-xl border-2 border-dashed border-border bg-white/60 p-8 text-center text-sm text-muted-foreground">
+      <div className="rounded-xl border-2 border-dashed border-border bg-white p-8 text-center text-sm text-muted-foreground">
         No posts yet. Be the first to talk trash.
       </div>
     );

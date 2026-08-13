@@ -44,7 +44,7 @@ export default async function HomePage() {
           <section>
             <div className="mb-4 text-center sm:text-left">
               <p className="ff-ribbon">League info</p>
-              <h2 className="ff-display mt-2.5 text-2xl tracking-tight sm:text-3xl">
+              <h2 className="ff-display ff-display-on-bg mt-2.5 text-2xl tracking-tight sm:text-3xl">
                 Explore
               </h2>
             </div>

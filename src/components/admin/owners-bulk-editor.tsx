@@ -346,7 +346,7 @@ export function OwnersBulkEditor({ owners }: { owners: Owner[] }) {
       </div>
 
       {/* Sticky save bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t-2 border-foreground bg-white/95 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.12)] backdrop-blur-md">
+      <div className="ff-sticky-bar fixed bottom-0 left-0 right-0 z-40 border-t-2 border-foreground bg-white px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.18)]">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">

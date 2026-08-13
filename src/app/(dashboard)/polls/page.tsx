@@ -25,7 +25,7 @@ export default async function PollsPage() {
       </header>
 
       {polls.length === 0 ? (
-        <div className="rounded-xl border-2 border-dashed border-border bg-white/60 p-8 text-center">
+        <div className="rounded-xl border-2 border-dashed border-border bg-white p-8 text-center">
           <p className="ff-display text-lg">No polls yet</p>
           <p className="mt-2 text-sm text-muted-foreground">
             Insert a row into <code className="font-mono">polls</code> with a

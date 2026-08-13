@@ -112,7 +112,10 @@ body {
   z-index: 0;
 }
 
-/* Dark wash so white paper cards stay readable */
+/*
+ * Heavy dark wash over video/still so paper cards and light page text stay legible.
+ * Atmosphere still reads through edges; content contrast wins.
+ */
 .ff-site-bg__overlay {
   position: absolute;
   inset: 0;
@@ -121,15 +124,34 @@ body {
   background:
     linear-gradient(
       180deg,
-      rgba(12, 12, 12, 0.55) 0%,
-      rgba(12, 12, 12, 0.45) 40%,
-      rgba(12, 12, 12, 0.62) 100%
+      rgba(6, 6, 6, 0.82) 0%,
+      rgba(6, 6, 6, 0.74) 32%,
+      rgba(6, 6, 6, 0.78) 68%,
+      rgba(6, 6, 6, 0.88) 100%
     ),
     radial-gradient(
-      ellipse at 50% 20%,
-      rgba(201, 162, 39, 0.08),
-      transparent 55%
+      ellipse at 50% 18%,
+      rgba(201, 162, 39, 0.06),
+      transparent 50%
     );
+}
+
+/* Mobile / small screens: slightly denser overlay (often brighter photos) */
+@media (max-width: 767px) {
+  .ff-site-bg__overlay {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(5, 5, 5, 0.86) 0%,
+        rgba(5, 5, 5, 0.8) 40%,
+        rgba(5, 5, 5, 0.9) 100%
+      ),
+      radial-gradient(
+        ellipse at 50% 15%,
+        rgba(201, 162, 39, 0.05),
+        transparent 48%
+      );
+  }
 }
 
 /* Content sits above background */
@@ -139,15 +161,54 @@ body {
   display: flex;
   min-height: 100dvh;
   flex-direction: column;
+  /* Free-floating text (outside paper cards) reads as light-on-dark */
+  color: #f3f1ed;
+  --foreground: #f3f1ed;
+  --muted-foreground: #c9c3b8;
 }
 
-/* Solid / frosted header so nav stays bright on video */
+/*
+ * Paper surfaces: solid bright cards with dark ink (never translucent).
+ * Resets text tokens so muted copy stays readable on white.
+ * Includes Tailwind bg-white panels used outside .ff-card.
+ */
+.ff-paper,
+.ff-card,
+.ff-player-card,
+.ff-hub-tile,
+.ff-stat-card,
+.ff-welcome,
+.ff-card-stripe,
+.ff-nav,
+.ff-subnav,
+.ff-site-footer,
+.ff-sticky-bar,
+.bg-white,
+.bg-card,
+.bg-amber-50,
+.bg-red-50,
+.bg-emerald-50 {
+  color: #141414;
+  --foreground: #141414;
+  --muted-foreground: #5c5c5c;
+  --card-foreground: #141414;
+}
+
+/* Warm paper chips used inside forms / draft slots */
+.bg-\[\#f4f2ef\],
+.bg-\[\#f4f2ef\]\/50 {
+  color: #141414;
+  --foreground: #141414;
+  --muted-foreground: #5c5c5c;
+}
+
+/* Fully opaque header — no glass bleed into stadium/video */
 .ff-nav {
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: #ffffff;
   border-bottom: 2px solid #141414;
-  box-shadow: 0 1px 0 rgba(201, 162, 39, 0.2);
+  box-shadow:
+    0 1px 0 rgba(201, 162, 39, 0.25),
+    0 4px 16px rgba(0, 0, 0, 0.18);
 }
 
 /* ---------- Display type ---------- */
@@ -187,19 +248,23 @@ body {
   box-shadow: 0 2px 0 rgba(201, 162, 39, 0.35);
 }
 
-/* Owner / player cards */
+/* Owner / player cards — solid paper, no see-through */
 .ff-player-card {
-  background: #fff;
+  background: #ffffff;
   border: 2px solid #141414;
   border-radius: 1rem;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   overflow: hidden;
-  box-shadow: 0 1px 0 #1414140a;
+  box-shadow:
+    0 1px 0 rgba(20, 20, 20, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.22);
 }
 
 .ff-player-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 12px 28px #1414141f;
+  box-shadow:
+    0 2px 0 rgba(20, 20, 20, 0.08),
+    0 14px 32px rgba(0, 0, 0, 0.28);
 }
 
 /* Hub tiles — large solid cards like the reference clubhouse */
@@ -210,7 +275,7 @@ body {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   text-align: center;
-  background: #fff;
+  background: #ffffff;
   border: 2px solid #141414;
   border-radius: 0.9rem;
   flex-direction: column;
@@ -223,7 +288,9 @@ body {
   transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease,
     box-shadow 0.15s ease;
   display: flex;
-  box-shadow: 0 1px 0 #1414140a;
+  box-shadow:
+    0 1px 0 rgba(20, 20, 20, 0.06),
+    0 6px 18px rgba(0, 0, 0, 0.18);
   text-decoration: none;
 }
 
@@ -258,18 +325,22 @@ body {
 
 /* Solid ink card shell used across dashboard pages */
 .ff-card {
-  background: #fff;
+  background: #ffffff;
   border: 2px solid #141414;
   border-radius: 0.9rem;
-  box-shadow: 0 1px 0 #1414140a;
+  box-shadow:
+    0 1px 0 rgba(20, 20, 20, 0.06),
+    0 6px 18px rgba(0, 0, 0, 0.16);
 }
 
 .ff-card-stripe {
   border-radius: 0.9rem;
   overflow: hidden;
   border: 2px solid #141414;
-  background: #fff;
-  box-shadow: 0 1px 0 #1414140a;
+  background: #ffffff;
+  box-shadow:
+    0 1px 0 rgba(20, 20, 20, 0.06),
+    0 6px 18px rgba(0, 0, 0, 0.16);
 }
 
 /* Page content width */
@@ -286,12 +357,16 @@ body {
   }
 }
 
-/* Secondary nav under main header */
+/* Secondary nav under main header — fully opaque */
 .ff-subnav {
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: #ffffff;
   border-bottom: 2px solid #141414;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Sticky bars (bulk editor, etc.) */
+.ff-sticky-bar {
+  background: #ffffff;
 }
 
 .ff-subnav-link {
@@ -324,6 +399,7 @@ body {
   align-items: center;
   border-radius: 9999px;
   border: 1.5px solid #16a34a;
+  background: #ecfdf5;
   color: #15803d;
   padding: 0.15rem 0.65rem;
   font-size: 0.7rem;
@@ -333,11 +409,13 @@ body {
 
 /* Stat chips on dashboard */
 .ff-stat-card {
-  background: #fff;
+  background: #ffffff;
   border: 2px solid #141414;
   border-radius: 0.85rem;
   padding: 1rem 1.1rem;
-  box-shadow: 0 1px 0 #1414140a;
+  box-shadow:
+    0 1px 0 rgba(20, 20, 20, 0.06),
+    0 4px 14px rgba(0, 0, 0, 0.14);
   position: relative;
   overflow: hidden;
 }
@@ -354,11 +432,21 @@ body {
 
 /* Welcome banner on private hub */
 .ff-welcome {
-  background: #fff;
+  background: #ffffff;
   border: 2px solid #141414;
   border-radius: 0.95rem;
   overflow: hidden;
-  box-shadow: 0 2px 0 #1414140d;
+  box-shadow:
+    0 2px 0 rgba(20, 20, 20, 0.08),
+    0 8px 22px rgba(0, 0, 0, 0.18);
+}
+
+/* Free-floating display headings on atmosphere (optional extra punch) */
+.ff-display-on-bg {
+  color: #ffffff;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.85),
+    0 4px 18px rgba(0, 0, 0, 0.45);
 }
 
 @media (prefers-reduced-motion: reduce) {

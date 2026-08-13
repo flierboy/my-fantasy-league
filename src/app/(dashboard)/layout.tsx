@@ -47,8 +47,8 @@ export default async function DashboardLayout({
         </div>
       </main>
 
-      <div className="border-t-2 border-foreground/10 py-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        <Link href="/" className="hover:text-foreground hover:underline">
+      <div className="border-t-2 border-white/15 bg-black/25 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white/85">
+        <Link href="/" className="hover:text-white hover:underline">
           ← Public homepage
         </Link>
       </div>

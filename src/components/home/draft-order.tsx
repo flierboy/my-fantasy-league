@@ -17,7 +17,7 @@ export function DraftOrder({ owners }: DraftOrderProps) {
     <section>
       <div className="mb-5 text-center sm:mb-6 sm:text-left">
         <p className="ff-ribbon">Draft</p>
-        <h2 className="ff-display mt-2.5 text-2xl tracking-tight sm:text-3xl">
+        <h2 className="ff-display ff-display-on-bg mt-2.5 text-2xl tracking-tight sm:text-3xl">
           Draft order
         </h2>
         <p className="mt-1.5 text-sm text-muted-foreground">
