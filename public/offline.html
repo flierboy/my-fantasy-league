@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#141414" />
+    <title>Offline · Upper Deckcers</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        background: #0c0c0c;
+        color: #f3f1ed;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        text-align: center;
+      }
+      .card {
+        max-width: 22rem;
+        padding: 1.75rem 1.5rem;
+        background: #ffffff;
+        color: #141414;
+        border: 2px solid #141414;
+        border-radius: 0.9rem;
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+      }
+      .emoji {
+        font-size: 2.75rem;
+        line-height: 1;
+      }
+      h1 {
+        margin: 0.85rem 0 0.4rem;
+        font-family: Impact, "Arial Black", sans-serif;
+        font-size: 1.5rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      p {
+        margin: 0;
+        font-size: 0.95rem;
+        color: #5c5c5c;
+        line-height: 1.45;
+      }
+      button {
+        margin-top: 1.25rem;
+        border: 2px solid #141414;
+        background: #141414;
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.75rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.65rem 1.1rem;
+        border-radius: 0.5rem;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="emoji" aria-hidden="true">🏈</div>
+      <h1>You're offline</h1>
+      <p>
+        Upper Deckcers needs a connection for live league data. Reconnect and
+        try again.
+      </p>
+      <button type="button" onclick="location.reload()">Retry</button>
+    </div>
+  </body>
+</html>
