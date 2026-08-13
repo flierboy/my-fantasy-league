@@ -5,13 +5,14 @@
  * Scope: / (this file lives at /sw.js)
  */
 
-const CACHE_VERSION = "ud-shell-v1";
+const CACHE_VERSION = "ud-shell-v3-crest";
 const PRECACHE = [
   "/",
   "/offline.html",
-  "/icons/icon-192.png",
-  "/icons/icon-512.png",
-  "/icons/apple-touch-icon.png",
+  "/icons/ud-v3-192.png",
+  "/icons/ud-v3-512.png",
+  "/icons/ud-v3-180.png",
+  "/favicon.png",
   "/manifest.webmanifest",
 ];
 

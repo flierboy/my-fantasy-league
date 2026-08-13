@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { BADGE_KEYS } from "@/lib/data/mappers";
+import { BADGE_KEYS } from "@/lib/data/badges";
 import type { BadgeKey } from "@/lib/types";
 import type { ActionResult } from "./types";
 import { fail, ok } from "./types";

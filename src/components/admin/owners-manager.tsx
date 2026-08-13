@@ -2,7 +2,7 @@
 
 import type { Owner } from "@/lib/types";
 import { NFL_TEAM_OPTIONS, OWNER_ROLE_OPTIONS } from "@/lib/types";
-import { BADGE_LIST } from "@/lib/data/badges";
+import { badgesByCategory } from "@/lib/data/badges";
 import {
   createOwner,
   updateOwner,
@@ -281,32 +281,44 @@ function OwnerFields({ owner }: { owner?: Owner }) {
         />
       </Field>
 
-      <div className="sm:col-span-2 lg:col-span-3">
-        <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+      <div className="sm:col-span-2 lg:col-span-3 space-y-3">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
           Badges
         </p>
-        <div className="flex flex-wrap gap-2">
-          {BADGE_LIST.map((b) => {
-            const checked = owner?.badges.includes(b.key) ?? false;
-            return (
-              <label
-                key={b.key}
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border-2 border-border bg-[#f4f2ef] px-2.5 py-1 text-xs font-semibold has-[:checked]:border-foreground has-[:checked]:bg-white"
-              >
-                <input
-                  type="checkbox"
-                  name="badges"
-                  value={b.key}
-                  defaultChecked={checked}
-                  className="accent-foreground"
-                />
-                <span>
-                  {b.emoji} {b.label}
-                </span>
-              </label>
-            );
-          })}
-        </div>
+        {badgesByCategory().map(({ category, badges }) => (
+          <div
+            key={category.id}
+            className="rounded-lg border-2 border-border bg-[#f4f2ef]/60 p-3"
+          >
+            <p className="ff-display text-xs tracking-wide">{category.label}</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              {category.blurb}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {badges.map((b) => {
+                const checked = owner?.badges.includes(b.key) ?? false;
+                return (
+                  <label
+                    key={b.key}
+                    title={b.description}
+                    className="inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-full border-2 border-border bg-white px-2 py-1 text-[11px] font-semibold leading-tight has-[:checked]:border-foreground has-[:checked]:bg-[#f4f2ef]"
+                  >
+                    <input
+                      type="checkbox"
+                      name="badges"
+                      value={b.key}
+                      defaultChecked={checked}
+                      className="accent-foreground"
+                    />
+                    <span className="truncate">
+                      {b.emoji} {b.label}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
 
       <label className="inline-flex items-center gap-2 text-sm font-semibold sm:col-span-2">

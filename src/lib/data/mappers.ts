@@ -9,20 +9,10 @@ import type {
   Standing,
   TrashTalkPost,
 } from "@/lib/types";
+import { BADGE_KEYS as CANONICAL_BADGE_KEYS } from "@/lib/data/badges";
 
 /** Valid badge keys — filter unknown values from the DB. */
-export const BADGE_KEYS = new Set<BadgeKey>([
-  "champion",
-  "commissioner",
-  "rookie",
-  "punished",
-  "it",
-  "runner_up",
-  "toilet",
-  "draft_guru",
-  "iron_man",
-  "high_scorer",
-]);
+export const BADGE_KEYS = CANONICAL_BADGE_KEYS;
 
 export function mapOwner(row: Record<string, unknown>): Owner {
   const rawBadges = Array.isArray(row.badges) ? (row.badges as string[]) : [];

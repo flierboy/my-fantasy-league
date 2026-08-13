@@ -3,23 +3,67 @@
  * These mirror the Supabase schema in /supabase/schema.sql.
  */
 
+/** Badge categories for hall + admin grouping */
+export type BadgeCategory =
+  | "season"
+  | "draft_strategic"
+  | "draft_cautionary"
+  | "weekly_top"
+  | "weekly_heartbreak"
+  | "weekly_specialty"
+  | "legacy";
+
 export type BadgeKey =
+  // Season awards
   | "champion"
-  | "commissioner"
-  | "rookie"
   | "punished"
+  | "commissioner"
   | "it"
+  | "rookie"
   | "runner_up"
-  | "toilet"
+  | "regular_season_champ"
+  | "high_scorer"
+  | "founding_member"
+  // Draft · Strategic
   | "draft_guru"
-  | "iron_man"
-  | "high_scorer";
+  | "sleeper_sniper"
+  | "value_hunter"
+  | "position_stack_king"
+  | "rookie_whisperer"
+  | "gridiron_nostradamus"
+  // Draft · Cautionary
+  | "reach_of_the_year"
+  | "auto_draft_hero"
+  | "injury_magnet"
+  | "homer_award"
+  | "kicker_in_the_9th"
+  // Weekly · Top performers
+  | "apex_predator"
+  | "blowout_machine"
+  | "heavy_hitter"
+  | "bench_depth_flex"
+  | "upset_artist"
+  // Weekly · Heartbreak
+  | "bench_blunder"
+  | "heartbreak_kid"
+  | "squeaked_by"
+  | "punching_bag"
+  | "bye_week_blunder"
+  // Weekly · Specialty
+  | "monday_night_miracle"
+  | "waiver_wire_wizard"
+  | "defense_wins"
+  | "clutch_kicker"
+  // Legacy (kept from earlier system)
+  | "toilet"
+  | "iron_man";
 
 export interface Badge {
   key: BadgeKey;
   label: string;
   emoji: string;
   description: string;
+  category: BadgeCategory;
   /** Tailwind-friendly gradient classes for the badge chip */
   className: string;
 }
