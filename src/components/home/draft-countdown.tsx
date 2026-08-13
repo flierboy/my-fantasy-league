@@ -2,12 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { DEFAULT_DRAFT_AT } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface DraftCountdownProps {
   /** ISO datetime from league_settings.draft_at */
   draftAt?: string | null;
   /** Compact layout for tight spaces */
   compact?: boolean;
+  /**
+   * Full-viewport landing countdown (logged-out homepage).
+   * Large centered digits over the atmosphere.
+   */
+  hero?: boolean;
+  /** Optional league name above hero countdown */
+  leagueName?: string;
 }
 
 type Parts = { days: number; hours: number; minutes: number; seconds: number };
@@ -46,6 +54,8 @@ function formatDraftLabel(iso: string): string {
 export function DraftCountdown({
   draftAt,
   compact = false,
+  hero = false,
+  leagueName,
 }: DraftCountdownProps) {
   const targetIso = draftAt?.trim() || DEFAULT_DRAFT_AT;
   const targetMs = new Date(targetIso).getTime();
@@ -65,6 +75,43 @@ export function DraftCountdown({
 
   const live = mounted ? parts : getParts(targetMs, targetMs - 1); // SSR placeholder
   const ended = mounted && parts === null;
+
+  if (hero) {
+    return (
+      <section
+        className="flex w-full flex-col items-center justify-center px-4 text-center"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {leagueName ? (
+          <p className="ff-display ff-display-on-bg text-2xl tracking-wide sm:text-3xl md:text-4xl">
+            {leagueName}
+          </p>
+        ) : null}
+
+        <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.22em] text-white/80 sm:mt-4 sm:text-xs">
+          {ended ? "Draft day" : "Draft countdown"}
+        </p>
+
+        {ended ? (
+          <p className="ff-display ff-display-on-bg mt-6 text-3xl sm:text-5xl">
+            Draft is live
+          </p>
+        ) : (
+          <div className="mt-5 grid w-full max-w-3xl grid-cols-4 gap-2 sm:mt-7 sm:gap-3 md:gap-4">
+            <HeroTimeBox label="Days" value={live?.days ?? 0} />
+            <HeroTimeBox label="Hours" value={live?.hours ?? 0} />
+            <HeroTimeBox label="Minutes" value={live?.minutes ?? 0} />
+            <HeroTimeBox label="Seconds" value={live?.seconds ?? 0} />
+          </div>
+        )}
+
+        <p className="mt-5 max-w-md text-xs font-semibold tracking-wide text-white/75 sm:mt-6 sm:text-sm">
+          {formatDraftLabel(targetIso)}
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section className="ff-card-stripe relative overflow-hidden">
@@ -106,6 +153,25 @@ export function DraftCountdown({
         )}
       </div>
     </section>
+  );
+}
+
+function HeroTimeBox({ label, value }: { label: string; value: number }) {
+  const display = String(value).padStart(2, "0");
+  return (
+    <div
+      className={cn(
+        "rounded-xl border-2 border-white/90 bg-white px-1.5 py-3 text-center",
+        "shadow-[0_8px_28px_rgba(0,0,0,0.45)] sm:rounded-2xl sm:px-2 sm:py-5 md:py-6"
+      )}
+    >
+      <p className="ff-display text-2xl tabular-nums tracking-tight text-[#141414] sm:text-4xl md:text-5xl lg:text-6xl">
+        {display}
+      </p>
+      <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.14em] text-[#5c5c5c] sm:mt-1.5 sm:text-[11px]">
+        {label}
+      </p>
+    </div>
   );
 }
 

@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { BG } from "@/lib/backgrounds";
+import { BG, stillForPath } from "@/lib/backgrounds";
 
 /**
  * Full-bleed atmospheric background behind all content.
- * - Homepage (desktop): muted looping video over tunnel still
- * - Other pages / mobile / reduced-motion: stadium night still
+ * - Homepage: muted looping Paycor Stadium video (desktop + mobile)
+ * - Other pages: route-based stadium stills (classic night vs MetLife)
+ * - Reduced motion on home: stadium still only
  * pointer-events: none — never blocks UI clicks
  */
 export function SiteBackground() {
@@ -25,9 +26,8 @@ export function SiteBackground() {
     const preferReduced = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
-    const isNarrow = window.matchMedia("(max-width: 767px)").matches;
 
-    if (preferReduced || isNarrow) {
+    if (preferReduced) {
       setShowVideo(false);
       return;
     }
@@ -54,13 +54,13 @@ export function SiteBackground() {
     };
   }, [isHome]);
 
-  // Homepage uses tunnel still; other pages use stadium night
-  const stillSrc = isHome ? BG.tunnelStill : BG.stadiumStill;
+  const stillSrc = isHome ? BG.stadiumStill : stillForPath(pathname);
 
   return (
     <div className="ff-site-bg" aria-hidden="true">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
+        key={stillSrc}
         src={stillSrc}
         alt=""
         className="ff-site-bg__still"
@@ -78,14 +78,15 @@ export function SiteBackground() {
           muted
           loop
           playsInline
-          preload="metadata"
-          poster={BG.tunnelStill}
+          preload="auto"
+          poster={BG.stadiumStill}
           onError={() => setShowVideo(false)}
         >
           <source src={BG.homepageVideo} type="video/mp4" />
         </video>
       )}
 
+      {/* Same strong dark overlay on every page for card/text contrast */}
       <div className="ff-site-bg__overlay" />
     </div>
   );

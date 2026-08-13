@@ -5,8 +5,13 @@ Swap these files anytime (keep the same filenames, or update paths in
 
 | File | Used on | Notes |
 |------|---------|--------|
-| `homepage-hero.mp4` | Homepage only | Muted loop, autoplay. Prefer ~720p/480p H.264, short loop, no audio. |
-| `stadium-night.jpg` | All other pages + video poster/fallback | Night stadium still |
-| `tunnel-entrance.jpg` | Extra fallback / poster alternative | Tunnel → field still |
+| `paycor.mp4` | Homepage only | Paycor Stadium aerial — muted loop, autoplay |
+| `stadium-night.jpg` | Dashboard, matchups, dues, admin, constitution, login, home poster | Existing stadium still |
+| `metlife-stadium.jpg` | History, Badges, Players | MetLife night / fireworks celebration |
+| `tunnel-entrance.jpg` | Optional alternate | Tunnel → field still |
+| `homepage-hero.mp4` | (unused backup) | Previous hero clip |
 
-Recommended max sizes: video ~2–5 MB, stills ~200–600 KB.
+Dark overlay is applied globally in CSS (`.ff-site-bg__overlay`) so paper
+cards stay high-contrast on every still/video.
+
+Recommended max sizes: video ~2–8 MB if possible; stills ~200–800 KB.

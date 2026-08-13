@@ -7,6 +7,8 @@ interface SiteHeaderProps {
   league: LeagueSettings;
   isAuthenticated?: boolean;
   showSignOut?: boolean;
+  /** Logo + Sign in only (logged-out landing) */
+  minimal?: boolean;
 }
 
 const PUBLIC_LINKS = [
@@ -20,6 +22,7 @@ export function SiteHeader({
   league,
   isAuthenticated = false,
   showSignOut = false,
+  minimal = false,
 }: SiteHeaderProps) {
   return (
     <>
@@ -41,26 +44,32 @@ export function SiteHeader({
               <p className="ff-display truncate text-base sm:text-lg">
                 {league.name}
               </p>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                {league.tagline}
-              </p>
+              {!minimal && (
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  {league.tagline}
+                </p>
+              )}
             </div>
           </Link>
 
-          <nav className="hidden items-center gap-0.5 md:flex">
-            {PUBLIC_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="rounded-lg px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+          {!minimal && (
+            <nav className="hidden items-center gap-0.5 md:flex">
+              {PUBLIC_LINKS.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="rounded-lg px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          )}
 
           <div className="flex shrink-0 items-center gap-2">
-            <span className="ff-live-pill hidden sm:inline-flex">Live</span>
+            {!minimal && (
+              <span className="ff-live-pill hidden sm:inline-flex">Live</span>
+            )}
             {isAuthenticated ? (
               <>
                 <Link
@@ -82,18 +91,20 @@ export function SiteHeader({
           </div>
         </div>
 
-        {/* Mobile public links */}
-        <div className="ff-page flex gap-1 overflow-x-auto border-t border-border/80 pb-2 pt-1 md:hidden">
-          {PUBLIC_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="shrink-0 rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </div>
+        {/* Mobile public links — hidden on minimal landing */}
+        {!minimal && (
+          <div className="ff-page flex gap-1 overflow-x-auto border-t border-border/80 pb-2 pt-1 md:hidden">
+            {PUBLIC_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="shrink-0 rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        )}
       </header>
     </>
   );
