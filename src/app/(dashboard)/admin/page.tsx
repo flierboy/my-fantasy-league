@@ -39,6 +39,24 @@ const SECTIONS = [
     blurb: "Champions, milestones, records",
   },
   {
+    href: "/admin/seasons",
+    icon: "📊",
+    title: "Past seasons",
+    blurb: "Year-by-year standings tables",
+  },
+  {
+    href: "/admin/drafts",
+    icon: "📋",
+    title: "Drafts",
+    blurb: "Past draft boards & imports",
+  },
+  {
+    href: "/admin/punishments",
+    icon: "☠️",
+    title: "Punishments",
+    blurb: "Wall of Shame entries",
+  },
+  {
     href: "/admin/import-espn",
     icon: "📥",
     title: "ESPN import",

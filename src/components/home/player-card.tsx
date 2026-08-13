@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Owner } from "@/lib/types";
 import { formatRecord } from "@/lib/utils";
 import { OwnerAvatar } from "./owner-avatar";
@@ -21,6 +22,7 @@ export function PlayerCard({
   className,
 }: PlayerCardProps) {
   const role = owner.role;
+  const href = `/players/${owner.id}`;
 
   return (
     <article
@@ -30,20 +32,23 @@ export function PlayerCard({
         className
       )}
     >
-      <OwnerAvatar
-        name={owner.display_name}
-        src={owner.avatar_url}
-        size={compact ? "lg" : "xl"}
-      />
+      <Link href={href} className="block">
+        <OwnerAvatar
+          name={owner.display_name}
+          src={owner.avatar_url}
+          size={compact ? "lg" : "xl"}
+        />
+      </Link>
 
-      <p
+      <Link
+        href={href}
         className={cn(
-          "ff-display mt-3 tracking-wide",
+          "ff-display mt-3 tracking-wide hover:underline",
           compact ? "text-sm sm:text-base" : "text-base sm:text-lg"
         )}
       >
         {owner.display_name}
-      </p>
+      </Link>
 
       {owner.team_name && (
         <p className="mt-0.5 max-w-full truncate px-1 text-[11px] font-semibold leading-snug text-muted-foreground sm:text-xs">
@@ -87,18 +92,24 @@ export function PlayerCard({
 
 /** Horizontal roster row for list view */
 export function PlayerListRow({ owner }: { owner: Owner }) {
+  const href = `/players/${owner.id}`;
   return (
     <li className="flex items-center gap-3 px-3 py-3 sm:gap-4 sm:px-5 sm:py-3.5">
-      <OwnerAvatar
-        name={owner.display_name}
-        src={owner.avatar_url}
-        size="md"
-      />
+      <Link href={href}>
+        <OwnerAvatar
+          name={owner.display_name}
+          src={owner.avatar_url}
+          size="md"
+        />
+      </Link>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="ff-display text-sm tracking-wide sm:text-base">
+          <Link
+            href={href}
+            className="ff-display text-sm tracking-wide hover:underline sm:text-base"
+          >
             {owner.display_name}
-          </p>
+          </Link>
           {owner.role && (
             <span className="rounded-full border border-foreground bg-[var(--banner)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
               {owner.role}

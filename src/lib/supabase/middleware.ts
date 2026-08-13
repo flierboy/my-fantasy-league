@@ -20,7 +20,7 @@ function isProtectedPath(path: string): boolean {
 
 /**
  * Refresh the Supabase session on every request and gate protected routes.
- * Public: /, /login, /history, /badges, /constitution
+ * Public: /, /login, /history, /drafts, /badges, /constitution, /players, /punishments
  */
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });

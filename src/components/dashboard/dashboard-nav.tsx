@@ -11,6 +11,8 @@ const BASE_LINKS = [
   { href: "/polls", label: "Polls" },
   { href: "/trash-talk", label: "Trash talk" },
   { href: "/history", label: "History" },
+  { href: "/drafts", label: "Drafts" },
+  { href: "/punishments", label: "Punishments" },
   { href: "/badges", label: "Badges" },
   { href: "/constitution", label: "Constitution" },
 ];

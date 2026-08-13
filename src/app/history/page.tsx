@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { PublicPageShell } from "@/components/layout/public-page-shell";
 import { getOwners } from "@/lib/data/league";
 import { ALL_TIME_BLURB, getHistoryEntries, groupHistory } from "@/lib/data/history";
+import { getPastSeasons } from "@/lib/data/seasons";
 import { formatRecord } from "@/lib/utils";
 import { OwnerAvatar } from "@/components/home/owner-avatar";
 
@@ -11,9 +13,10 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function HistoryPage() {
-  const [{ entries, source }, owners] = await Promise.all([
+  const [{ entries, source }, owners, { seasons }] = await Promise.all([
     getHistoryEntries(),
     getOwners(),
+    getPastSeasons({ withStandings: true }),
   ]);
 
   const { champions, milestones, records, notes } = groupHistory(entries);
@@ -51,6 +54,179 @@ export default async function HistoryPage() {
             )}
           </div>
         </header>
+
+        {/* Past season standings tables */}
+        {seasons.length > 0 && (
+          <section className="space-y-8">
+            <div>
+              <p className="ff-ribbon text-[10px] !px-3 !py-1">Past seasons</p>
+              <h2 className="ff-display mt-2.5 text-2xl">Season standings</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Full tables by year — champions highlighted.{" "}
+                <Link href="/drafts" className="font-bold underline">
+                  Draft boards →
+                </Link>
+                {" · "}
+                <Link href="/punishments" className="font-bold underline">
+                  Wall of Shame →
+                </Link>
+              </p>
+            </div>
+            {seasons.map((season) => {
+              const rows = [...(season.standings ?? [])].sort(
+                (a, b) => a.rank - b.rank
+              );
+              return (
+                <div key={season.id} className="space-y-3">
+                  <div className="flex flex-wrap items-end justify-between gap-2">
+                    <div>
+                      <h3 className="ff-display text-xl tracking-tight">
+                        {season.label || season.season_year}
+                      </h3>
+                      {(season.champion || season.runner_up) && (
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {season.champion && (
+                            <span>
+                              🏆{" "}
+                              {season.champion_owner_id ? (
+                                <Link
+                                  href={`/players/${season.champion_owner_id}`}
+                                  className="font-bold underline"
+                                >
+                                  {season.champion.display_name}
+                                </Link>
+                              ) : (
+                                season.champion.display_name
+                              )}
+                            </span>
+                          )}
+                          {season.runner_up && (
+                            <span className="ml-3">
+                              🥈{" "}
+                              {season.runner_up_owner_id ? (
+                                <Link
+                                  href={`/players/${season.runner_up_owner_id}`}
+                                  className="font-semibold underline"
+                                >
+                                  {season.runner_up.display_name}
+                                </Link>
+                              ) : (
+                                season.runner_up.display_name
+                              )}
+                            </span>
+                          )}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {season.recap_notes && (
+                    <p className="ff-card p-4 text-sm leading-relaxed text-muted-foreground">
+                      {season.recap_notes}
+                    </p>
+                  )}
+                  {rows.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      No standings rows for this season yet.
+                    </p>
+                  ) : (
+                    <div className="ff-card overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead className="border-b-2 border-foreground bg-[#f4f2ef] text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                          <tr>
+                            <th className="px-3 py-3 sm:px-4">#</th>
+                            <th className="px-3 py-3 sm:px-4">Team / owner</th>
+                            <th className="px-3 py-3 text-right sm:px-4">
+                              W-L-T
+                            </th>
+                            <th className="hidden px-3 py-3 text-right sm:table-cell sm:px-4">
+                              PF
+                            </th>
+                            <th className="hidden px-3 py-3 text-right md:table-cell md:px-4">
+                              PA
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                          {rows.map((row) => {
+                            const name =
+                              row.owner?.display_name ||
+                              row.team_name ||
+                              "—";
+                            const champ =
+                              row.is_champion ||
+                              row.owner_id === season.champion_owner_id;
+                            return (
+                              <tr
+                                key={row.id}
+                                className={
+                                  champ
+                                    ? "bg-amber-50/90"
+                                    : row.is_runner_up
+                                      ? "bg-zinc-50"
+                                      : undefined
+                                }
+                              >
+                                <td className="px-3 py-3 font-mono font-bold sm:px-4">
+                                  {row.rank}
+                                  {champ ? " 🏆" : ""}
+                                  {row.is_runner_up && !champ ? " 🥈" : ""}
+                                </td>
+                                <td className="px-3 py-3 sm:px-4">
+                                  <div className="flex items-center gap-2">
+                                    {row.owner && (
+                                      <OwnerAvatar
+                                        name={name}
+                                        src={row.owner.avatar_url}
+                                        size="sm"
+                                      />
+                                    )}
+                                    <div className="min-w-0">
+                                      {row.owner_id ? (
+                                        <Link
+                                          href={`/players/${row.owner_id}`}
+                                          className="ff-display text-sm hover:underline"
+                                        >
+                                          {name}
+                                        </Link>
+                                      ) : (
+                                        <span className="ff-display text-sm">
+                                          {name}
+                                        </span>
+                                      )}
+                                      {row.team_name &&
+                                        row.team_name !== name && (
+                                          <p className="truncate text-[11px] text-muted-foreground">
+                                            {row.team_name}
+                                          </p>
+                                        )}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-3 py-3 text-right font-mono font-bold tabular-nums sm:px-4">
+                                  {formatRecord(
+                                    row.wins,
+                                    row.losses,
+                                    row.ties
+                                  )}
+                                </td>
+                                <td className="hidden px-3 py-3 text-right font-mono tabular-nums sm:table-cell sm:px-4">
+                                  {row.points_for.toFixed(1)}
+                                </td>
+                                <td className="hidden px-3 py-3 text-right font-mono tabular-nums text-muted-foreground md:table-cell md:px-4">
+                                  {row.points_against.toFixed(1)}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </section>
+        )}
 
         {/* Champions / trophy wall */}
         <section>
@@ -199,7 +375,10 @@ export default async function HistoryPage() {
                   <tr key={owner.id}>
                     <td className="px-4 py-3 font-mono font-bold">{idx + 1}</td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
+                      <Link
+                        href={`/players/${owner.id}`}
+                        className="flex items-center gap-2 hover:underline"
+                      >
                         <OwnerAvatar
                           name={owner.display_name}
                           src={owner.avatar_url}
@@ -208,7 +387,7 @@ export default async function HistoryPage() {
                         <span className="ff-display text-sm">
                           {owner.display_name}
                         </span>
-                      </div>
+                      </Link>
                     </td>
                     <td className="px-4 py-3 text-right font-mono font-bold tabular-nums">
                       {formatRecord(owner.wins, owner.losses, owner.ties)}

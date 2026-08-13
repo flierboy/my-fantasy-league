@@ -244,6 +244,94 @@ export interface HistoryEntry {
   updated_at: string;
 }
 
+/** Manual past-season standings (not live weekly standings) */
+export interface PastSeason {
+  id: string;
+  season_year: number;
+  label: string;
+  recap_notes: string | null;
+  champion_owner_id: string | null;
+  runner_up_owner_id: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  standings?: PastSeasonStanding[];
+  champion?: Owner | null;
+  runner_up?: Owner | null;
+}
+
+export interface PastSeasonStanding {
+  id: string;
+  season_id: string;
+  owner_id: string | null;
+  team_name: string | null;
+  wins: number;
+  losses: number;
+  ties: number;
+  points_for: number;
+  points_against: number;
+  rank: number;
+  is_champion: boolean;
+  is_runner_up: boolean;
+  owner?: Owner | null;
+}
+
+/** Wall of Shame punishment entries */
+export interface Punishment {
+  id: string;
+  season_year: number;
+  owner_id: string | null;
+  owner_label: string | null;
+  title: string;
+  description: string;
+  photo_url: string | null;
+  notes: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  owner?: Owner | null;
+}
+
+/** Draft history */
+export type DraftSource = "espn" | "yahoo" | "sleeper" | "manual";
+
+export interface DraftYear {
+  id: string;
+  season_year: number;
+  source: DraftSource;
+  notes: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  picks?: DraftPick[];
+  pick_count?: number;
+}
+
+export interface DraftPick {
+  id: string;
+  draft_year_id: string;
+  season_year: number;
+  round: number;
+  pick_in_round: number;
+  overall_pick: number;
+  player_name: string;
+  position: string | null;
+  nfl_team: string | null;
+  fantasy_owner_name: string;
+  owner_id: string | null;
+  owner?: Owner | null;
+}
+
+export const DRAFT_SOURCE_OPTIONS: {
+  value: DraftSource;
+  label: string;
+}[] = [
+  { value: "espn", label: "ESPN" },
+  { value: "yahoo", label: "Yahoo" },
+  { value: "sleeper", label: "Sleeper" },
+  { value: "manual", label: "Manual" },
+];
+
 /** Default Upper Deckcers draft: Sun Aug 30, 2026 3:45 PM EDT = 19:45 UTC */
 export const DEFAULT_DRAFT_AT = "2026-08-30T19:45:00.000Z";
 
