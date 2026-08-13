@@ -43,6 +43,23 @@ type OwnerWritePayload = {
   sleeper_username: string | null;
 };
 
+const OPTIONAL_OWNER_COLUMNS = [
+  "favorite_nfl_team",
+  "sleeper_username",
+  "role",
+] as const;
+
+function omitKeys(
+  payload: OwnerWritePayload,
+  keys: readonly string[]
+): Record<string, unknown> {
+  const next: Record<string, unknown> = { ...payload };
+  for (const key of keys) {
+    delete next[key];
+  }
+  return next;
+}
+
 /** Retry without optional columns if migrations not applied yet. */
 async function updateOwnerRow(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -53,28 +70,41 @@ async function updateOwnerRow(
   if (!error) return { error: null as string | null, stripped: [] as string[] };
 
   const stripped: string[] = [];
-  let next: Record<string, unknown> = { ...payload };
+  const next: Record<string, unknown> = { ...payload };
 
-  if (error.message.includes("favorite_nfl_team")) {
-    delete next.favorite_nfl_team;
-    stripped.push("favorite_nfl_team");
-    ({ error } = await supabase.from("owners").update(next).eq("id", id));
-  }
-  if (error?.message.includes("sleeper_username")) {
-    delete next.sleeper_username;
-    stripped.push("sleeper_username");
-    ({ error } = await supabase.from("owners").update(next).eq("id", id));
-  }
-  if (error?.message.includes("role")) {
-    delete next.role;
-    stripped.push("role");
-    ({ error } = await supabase.from("owners").update(next).eq("id", id));
+  for (const col of OPTIONAL_OWNER_COLUMNS) {
+    if (error?.message.includes(col)) {
+      delete next[col];
+      stripped.push(col);
+      ({ error } = await supabase.from("owners").update(next).eq("id", id));
+    }
   }
 
   return {
     error: error?.message ?? null,
     stripped,
   };
+}
+
+/** Insert with progressive strip of optional columns on migration errors. */
+async function insertOwnerRow(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  payload: OwnerWritePayload
+) {
+  let { error } = await supabase.from("owners").insert(payload);
+  if (!error) return { error: null as string | null };
+
+  const stripped: string[] = [];
+  for (const col of OPTIONAL_OWNER_COLUMNS) {
+    if (error?.message.includes(col)) {
+      stripped.push(col);
+      ({ error } = await supabase
+        .from("owners")
+        .insert(omitKeys(payload, stripped)));
+    }
+  }
+
+  return { error: error?.message ?? null };
 }
 
 function parseBadges(formData: FormData): BadgeKey[] {
@@ -157,25 +187,8 @@ export async function createOwner(formData: FormData): Promise<ActionResult> {
     favorite_nfl_team,
     sleeper_username,
   };
-  let { error } = await supabase.from("owners").insert(payload);
-
-  // Drop optional columns if migrations not applied yet
-  if (error?.message?.includes("favorite_nfl_team")) {
-    const { favorite_nfl_team: _f, ...rest } = payload;
-    ({ error } = await supabase.from("owners").insert(rest));
-  }
-  if (error?.message?.includes("sleeper_username")) {
-    const { sleeper_username: _s, ...rest } = payload;
-    const { favorite_nfl_team: _f, ...rest2 } = rest as OwnerWritePayload;
-    ({ error } = await supabase.from("owners").insert(rest2));
-  }
-  if (error?.message?.includes("role")) {
-    const { role: _r, favorite_nfl_team: _f, sleeper_username: _s, ...rest } =
-      payload;
-    ({ error } = await supabase.from("owners").insert(rest));
-  }
-
-  if (error) return fail(error.message);
+  const result = await insertOwnerRow(supabase, payload);
+  if (result.error) return fail(result.error);
   revalidateOwners();
   return ok("Owner created");
 }
