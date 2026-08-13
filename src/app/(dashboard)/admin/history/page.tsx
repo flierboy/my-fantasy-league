@@ -6,13 +6,10 @@ export const metadata = {
 };
 
 export default async function AdminHistoryPage() {
-  const { entries, source } = await getHistoryEntries();
+  const { entries, source, empty, error } = await getHistoryEntries();
 
-  // Don't show pure fallback placeholder rows as "editable" DB rows
-  const liveEntries =
-    source === "supabase"
-      ? entries
-      : entries.filter((e) => !e.id.startsWith("fallback-"));
+  // Live DB rows only (never treat fallback placeholders as editable)
+  const liveEntries = source === "supabase" ? entries : [];
 
   return (
     <div className="space-y-6">
@@ -26,16 +23,23 @@ export default async function AdminHistoryPage() {
             /history
           </a>{" "}
           page.
-          {source === "placeholder" && (
-            <span className="mt-2 block rounded-lg border-2 border-amber-600/40 bg-amber-50 px-3 py-2 text-amber-950">
-              Database table not found or empty. Run{" "}
-              <code className="font-mono text-xs">
-                supabase/migrate-history-entries.sql
-              </code>{" "}
-              in the Supabase SQL Editor, then refresh.
-            </span>
-          )}
         </p>
+        {error && (
+          <div className="mt-3 rounded-lg border-2 border-destructive/40 bg-red-50 px-3 py-2 text-sm text-red-950">
+            <p className="font-bold">Could not load history_entries</p>
+            <p className="mt-1 font-mono text-xs">{error}</p>
+          </div>
+        )}
+        {source === "supabase" && empty && (
+          <p className="mt-3 rounded-lg border-2 border-emerald-800/30 bg-emerald-50 px-3 py-2 text-sm text-emerald-950">
+            Table connected — no entries yet. Create the first one below.
+          </p>
+        )}
+        {source === "placeholder" && !error && (
+          <p className="mt-3 rounded-lg border-2 border-amber-600/40 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+            Showing offline placeholders. Connect Supabase or check env vars.
+          </p>
+        )}
       </header>
 
       <HistoryManager entries={liveEntries} />

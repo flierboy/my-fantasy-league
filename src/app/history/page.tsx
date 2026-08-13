@@ -39,7 +39,14 @@ export default async function HistoryPage() {
             </p>
             {source === "placeholder" && (
               <p className="mt-3 text-xs font-semibold text-muted-foreground">
-                Showing starter content until admins add entries (Admin → History).
+                Showing starter content until history loads from the database
+                (Admin → History).
+              </p>
+            )}
+            {source === "supabase" && entries.length === 0 && (
+              <p className="mt-3 text-xs font-semibold text-muted-foreground">
+                No history entries yet — commissioners can add them under Admin →
+                History.
               </p>
             )}
           </div>

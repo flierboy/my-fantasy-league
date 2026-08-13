@@ -1,13 +1,14 @@
 -- =============================================================================
 -- History entries — admin-editable league history
 -- Run once in Supabase SQL Editor
+-- Column name: record_type (champion | milestone | record | note)
 -- =============================================================================
 
 create table if not exists public.history_entries (
   id uuid primary key default gen_random_uuid(),
   -- champion | milestone | record | note
-  entry_type text not null
-    check (entry_type in ('champion', 'milestone', 'record', 'note')),
+  record_type text not null
+    check (record_type in ('champion', 'milestone', 'record', 'note')),
   -- Display year / season label (e.g. "2024", "2025 playoffs")
   year_label text not null,
   -- Optional numeric season for sorting champions
@@ -21,8 +22,26 @@ create table if not exists public.history_entries (
   updated_at timestamptz not null default now()
 );
 
+-- If an older install used entry_type, rename it
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'history_entries'
+      and column_name = 'entry_type'
+  ) and not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'history_entries'
+      and column_name = 'record_type'
+  ) then
+    alter table public.history_entries rename column entry_type to record_type;
+  end if;
+end $$;
+
 create index if not exists history_entries_type_idx
-  on public.history_entries (entry_type, sort_order, season_year desc nulls last);
+  on public.history_entries (record_type, sort_order, season_year desc nulls last);
 
 alter table public.history_entries enable row level security;
 
@@ -41,7 +60,7 @@ create trigger history_entries_updated_at
 
 -- Optional starter row (safe to keep or delete)
 insert into public.history_entries (
-  entry_type, year_label, season_year, title, champion, runner_up, notes, sort_order
+  record_type, year_label, season_year, title, champion, runner_up, notes, sort_order
 )
 select
   'note',

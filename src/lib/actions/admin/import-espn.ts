@@ -257,14 +257,14 @@ export async function importEspnLeague(
       notes.push("Matchups skipped (checkbox off).");
     }
 
-    // History: champion + season recap note
+    // History: champion + season recap note (DB column: record_type)
     const historyCreated: string[] = [];
     if (plan.championTeamName) {
       // Avoid duplicate champion entry for same season
       const { data: existingChamp } = await supabase
         .from("history_entries")
         .select("id")
-        .eq("entry_type", "champion")
+        .eq("record_type", "champion")
         .eq("season_year", season)
         .maybeSingle();
 
@@ -272,6 +272,7 @@ export async function importEspnLeague(
         const { error } = await supabase
           .from("history_entries")
           .update({
+            record_type: "champion",
             year_label: String(season),
             title: `${season} Champion`,
             champion: plan.championTeamName,
@@ -284,7 +285,7 @@ export async function importEspnLeague(
         if (!error) historyCreated.push(`Updated champion: ${plan.championTeamName}`);
       } else {
         const { error } = await supabase.from("history_entries").insert({
-          entry_type: "champion",
+          record_type: "champion",
           year_label: String(season),
           season_year: season,
           title: `${season} Champion`,
@@ -294,7 +295,7 @@ export async function importEspnLeague(
           sort_order: 0,
         });
         if (error) {
-          if (error.message.includes("history_entries") || error.code === "42P01") {
+          if (error.code === "42P01") {
             notes.push(
               "history_entries table missing — run migrate-history-entries.sql to store champions"
             );
@@ -315,7 +316,7 @@ export async function importEspnLeague(
     const topPf = [...plan.teams].sort((a, b) => b.pointsFor - a.pointsFor)[0];
     if (topPf && topPf.pointsFor > 0) {
       const { error } = await supabase.from("history_entries").insert({
-        entry_type: "record",
+        record_type: "record",
         year_label: String(season),
         season_year: season,
         title: `${season} Points leader`,
@@ -337,7 +338,7 @@ export async function importEspnLeague(
       .join("\n");
     if (standingsLines) {
       const { error } = await supabase.from("history_entries").insert({
-        entry_type: "note",
+        record_type: "note",
         year_label: String(season),
         season_year: season,
         title: `${season} ESPN standings import`,
