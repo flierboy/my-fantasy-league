@@ -33,6 +33,12 @@ const SECTIONS = [
     blurb: "Name, rules, season, dues amount",
   },
   {
+    href: "/admin/constitution",
+    icon: "⚖️",
+    title: "Constitution",
+    blurb: "Edit public league rules",
+  },
+  {
     href: "/admin/history",
     icon: "📜",
     title: "History",

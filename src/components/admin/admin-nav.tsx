@@ -9,6 +9,7 @@ const LINKS = [
   { href: "/admin/owners", label: "Owners" },
   { href: "/admin/owners/bulk", label: "Bulk owners" },
   { href: "/admin/settings", label: "Settings" },
+  { href: "/admin/constitution", label: "Constitution" },
   { href: "/admin/history", label: "History" },
   { href: "/admin/seasons", label: "Past seasons" },
   { href: "/admin/drafts", label: "Drafts" },

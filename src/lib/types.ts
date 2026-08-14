@@ -224,6 +224,8 @@ export interface LeagueSettings {
    * Optional until migrate-badge-awards.sql is applied (defaults true).
    */
   auto_award_weekly_badges?: boolean;
+  /** Opening paragraph for /constitution (optional until migrate-constitution.sql). */
+  constitution_intro?: string | null;
 }
 
 export interface DuePayment {

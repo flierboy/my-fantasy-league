@@ -1,8 +1,5 @@
 import { PublicPageShell } from "@/components/layout/public-page-shell";
-import {
-  CONSTITUTION_INTRO,
-  CONSTITUTION_SECTIONS,
-} from "@/lib/data/constitution";
+import { getConstitution } from "@/lib/data/constitution";
 
 export const metadata = {
   title: "Constitution",
@@ -11,6 +8,8 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function ConstitutionPage() {
+  const { intro, sections } = await getConstitution();
+
   return (
     <PublicPageShell>
       <div className="space-y-8">
@@ -22,16 +21,16 @@ export default async function ConstitutionPage() {
               Constitution
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              {CONSTITUTION_INTRO}
+              {intro}
             </p>
           </div>
         </header>
 
         <nav className="ff-card flex flex-wrap gap-2 p-4">
-          {CONSTITUTION_SECTIONS.map((s) => (
+          {sections.map((s) => (
             <a
               key={s.id}
-              href={`#${s.id}`}
+              href={`#${s.section_key || s.id}`}
               className="rounded-lg border-2 border-foreground bg-[#f4f2ef] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider hover:bg-foreground hover:text-background"
             >
               {s.title}
@@ -40,10 +39,10 @@ export default async function ConstitutionPage() {
         </nav>
 
         <div className="space-y-4">
-          {CONSTITUTION_SECTIONS.map((section, idx) => (
+          {sections.map((section, idx) => (
             <section
               key={section.id}
-              id={section.id}
+              id={section.section_key || section.id}
               className="ff-card scroll-mt-28 p-5 sm:p-6"
             >
               <div className="flex items-baseline gap-3">
@@ -55,9 +54,9 @@ export default async function ConstitutionPage() {
                 </h2>
               </div>
               <ul className="mt-4 space-y-2.5">
-                {section.body.map((line) => (
+                {section.body.map((line, lineIdx) => (
                   <li
-                    key={line.slice(0, 48)}
+                    key={`${section.id}-${lineIdx}`}
                     className="flex gap-2 text-sm leading-relaxed text-foreground/90"
                   >
                     <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent-field)]" />
