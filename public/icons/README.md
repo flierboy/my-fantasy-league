@@ -1,15 +1,25 @@
-# Upper Decker crest icons (v3)
+# Upper Decker crest icons (v4)
 
-All PWA / app icons are the **Upper Decker** crest from `logo-source.png`.
+All PWA / favicon / app icons use the **Upper Decker can crest**
+(toilet paper + blue spray can + broom, “UPPER DECKER” text, rope ring).
 
-Versioned filenames (`ud-v3-*`) bust browser/PWA caches of old art.
+**Not** the old baseball-bat placeholder.
 
-| File | Size |
-|------|------|
-| `ud-v3-48.png` … `ud-v3-512.png` | various |
-| `ud-v3-512-maskable.png` | 512 maskable |
-| `ud-v3-180.png` | Apple touch |
-| `logo-source.png` | original crest |
-| `logo-master-v3.png` | 1024 master |
+Versioned filenames (`ud-v4-*`) bust browser/PWA caches of older art.
 
-Also: `src/app/icon.png`, `src/app/apple-icon.png`, `public/favicon.png`
+| File | Size / role |
+|------|-------------|
+| `logo-master-v4.png` | 1024 master |
+| `logo-source.png` / `logo-crest-source-v4.png` | original crest reference |
+| `ud-v4-32.png` … `ud-v4-512.png` | PWA / favicon sizes |
+| `ud-v4-180.png` | Apple touch |
+| `ud-v4-512-maskable.png` | maskable home-screen |
+| `ud-v4-favicon-32.png` / `ud-v4-favicon-48.png` | explicit favicon paths |
+
+Also mirrored to:
+
+- `src/app/icon.png` (192 — Next App Router)
+- `src/app/apple-icon.png` (180)
+- `public/favicon.png` / `public/favicon-32.png` (crest, not bats)
+
+Service worker cache: `ud-shell-v4-crest`

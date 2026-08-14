@@ -19,7 +19,8 @@ export function ServiceWorkerRegister() {
 
     const onLoad = () => {
       navigator.serviceWorker
-        .register("/sw.js", { scope: "/" })
+        // Query string forces browsers to re-fetch after cache-name bumps
+        .register("/sw.js?v=ud-shell-v4-crest", { scope: "/" })
         .then((reg) => {
           updateTimer = window.setInterval(() => {
             void reg.update();

@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
 
 /**
- * Web App Manifest — icons use versioned /icons/ud-v3-* paths
- * so browsers drop any previously cached placeholder art.
+ * Web App Manifest — icons use versioned /icons/ud-v4-* paths
+ * (Upper Decker can crest) so browsers drop any previously cached bat art.
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -20,61 +20,61 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: "en-US",
     icons: [
       {
-        src: "/icons/ud-v3-48.png",
+        src: "/icons/ud-v4-48.png",
         sizes: "48x48",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icons/ud-v3-72.png",
+        src: "/icons/ud-v4-72.png",
         sizes: "72x72",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icons/ud-v3-96.png",
+        src: "/icons/ud-v4-96.png",
         sizes: "96x96",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icons/ud-v3-128.png",
+        src: "/icons/ud-v4-128.png",
         sizes: "128x128",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icons/ud-v3-144.png",
+        src: "/icons/ud-v4-144.png",
         sizes: "144x144",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icons/ud-v3-192.png",
+        src: "/icons/ud-v4-192.png",
         sizes: "192x192",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icons/ud-v3-256.png",
+        src: "/icons/ud-v4-256.png",
         sizes: "256x256",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icons/ud-v3-384.png",
+        src: "/icons/ud-v4-384.png",
         sizes: "384x384",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icons/ud-v3-512.png",
+        src: "/icons/ud-v4-512.png",
         sizes: "512x512",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icons/ud-v3-512-maskable.png",
+        src: "/icons/ud-v4-512-maskable.png",
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",

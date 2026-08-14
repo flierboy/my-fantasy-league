@@ -202,13 +202,16 @@ body {
   --muted-foreground: #5c5c5c;
 }
 
-/* Fully opaque header — no glass bleed into stadium/video */
+/* Fully opaque header — no glass bleed into stadium/video.
+   Safe-area top padding keeps sticky nav + Sign in below notch / status bar. */
 .ff-nav {
   background: #ffffff;
   border-bottom: 2px solid #141414;
   box-shadow:
     0 1px 0 rgba(201, 162, 39, 0.25),
     0 4px 16px rgba(0, 0, 0, 0.18);
+  /* iOS / Android: clear the status bar when sticky at top */
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 /* ---------- Display type ---------- */

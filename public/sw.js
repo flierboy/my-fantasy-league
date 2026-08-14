@@ -5,14 +5,14 @@
  * Scope: / (this file lives at /sw.js)
  */
 
-const CACHE_VERSION = "ud-shell-v3-crest";
+const CACHE_VERSION = "ud-shell-v4-crest";
 const PRECACHE = [
   "/",
   "/offline.html",
-  "/icons/ud-v3-192.png",
-  "/icons/ud-v3-512.png",
-  "/icons/ud-v3-180.png",
-  "/favicon.png",
+  "/icons/ud-v4-192.png",
+  "/icons/ud-v4-512.png",
+  "/icons/ud-v4-180.png",
+  "/icons/ud-v4-48.png",
   "/manifest.webmanifest",
 ];
 
@@ -61,6 +61,7 @@ function isStaticAsset(url) {
     path.startsWith("/_next/static/") ||
     path.startsWith("/icons/") ||
     path === "/favicon.ico" ||
+    path === "/favicon.png" ||
     path === "/manifest.webmanifest" ||
     /\.(png|jpg|jpeg|gif|webp|svg|ico|woff2?)$/i.test(path)
   );
