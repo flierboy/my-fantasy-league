@@ -219,6 +219,11 @@ export interface LeagueSettings {
   trophy_blurb: string;
   /** ISO timestamptz for draft countdown (e.g. 2026-08-30T19:45:00.000Z). */
   draft_at: string | null;
+  /**
+   * Auto-award weekly badges after Sleeper sync once season is underway.
+   * Optional until migrate-badge-awards.sql is applied (defaults true).
+   */
+  auto_award_weekly_badges?: boolean;
 }
 
 export interface DuePayment {

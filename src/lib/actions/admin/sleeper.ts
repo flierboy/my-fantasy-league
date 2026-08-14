@@ -11,6 +11,7 @@ import {
 } from "@/lib/sleeper/client";
 import { buildSleeperPreview, matchOwnerId } from "@/lib/sleeper/map";
 import { sendWeeklyResultsEmailToOwners } from "@/lib/email/weekly";
+import { evaluateWeeklyBadges } from "@/lib/badges/weekly-eval";
 import type { ActionResult } from "./types";
 import { fail, ok } from "./types";
 import { requireAdmin } from "./utils";
@@ -44,6 +45,13 @@ export type SleeperSyncSummary = {
     message: string;
     week?: number;
   };
+  /** Weekly badge auto-award summary */
+  badgeAwards?: {
+    week?: number;
+    summary: string;
+    awarded: string[];
+    skipped: string[];
+  };
 };
 
 function revalidateAll() {
@@ -51,6 +59,8 @@ function revalidateAll() {
   revalidatePath("/dashboard");
   revalidatePath("/matchups");
   revalidatePath("/history");
+  revalidatePath("/players");
+  revalidatePath("/badges");
   revalidatePath("/admin");
   revalidatePath("/admin/sleeper");
   revalidatePath("/admin/owners");
@@ -75,6 +85,10 @@ export async function syncSleeperLeague(
   const updateRecords = formData.get("update_records") !== "off"; // default on
   const emailWeeklyAfterSync =
     formData.get("email_weekly_after_sync") === "on";
+  // Default ON unless explicitly unchecked (hidden "off" not used — checkbox only present when on)
+  const autoAwardBadges =
+    formData.get("auto_award_weekly_badges") === "on" ||
+    formData.get("auto_award_weekly_badges") === "true";
   const weeklyWeekRaw = String(formData.get("weekly_week") ?? "").trim();
   const weeklyWeekParsed = weeklyWeekRaw
     ? Number.parseInt(weeklyWeekRaw, 10)
@@ -296,8 +310,9 @@ export async function syncSleeperLeague(
     revalidateAll();
 
     let weeklyEmail: SleeperSyncSummary["weeklyEmail"];
+    let badgeAwards: SleeperSyncSummary["badgeAwards"];
 
-    // Auto weekly email only when season is underway (not pre_draft) and opted in
+    // Auto weekly email / badges only when season is underway (not pre_draft)
     const seasonUnderway =
       preview.status !== "pre_draft" && preview.status !== "drafting";
     if (emailWeeklyAfterSync) {
@@ -328,6 +343,41 @@ export async function syncSleeperLeague(
       }
     }
 
+    // Auto weekly badges (checkbox default on in UI when season underway)
+    if (autoAwardBadges) {
+      if (!seasonUnderway) {
+        notes.push(
+          "Skipped weekly badges — league is still pre-draft/drafting."
+        );
+      } else {
+        const badgeResult = await evaluateWeeklyBadges({
+          leagueId,
+          week:
+            weeklyWeekParsed != null && Number.isFinite(weeklyWeekParsed)
+              ? weeklyWeekParsed
+              : undefined,
+          seasonYear,
+        });
+        badgeAwards = {
+          week: badgeResult.week,
+          summary: badgeResult.summary,
+          awarded: badgeResult.inserted.map(
+            (a) => `${a.badge_key}→${a.owner_name}`
+          ),
+          skipped: badgeResult.skipped,
+        };
+        notes.push(`Badges: ${badgeResult.summary}`);
+        if (badgeResult.skipped.length) {
+          notes.push(
+            `Badge skips: ${badgeResult.skipped.slice(0, 4).join("; ")}`
+          );
+        }
+        if (!badgeResult.ok && badgeResult.error) {
+          notes.push(`Badge eval error: ${badgeResult.error}`);
+        }
+      }
+    }
+
     return {
       ok: true,
       leagueId: preview.leagueId,
@@ -345,6 +395,7 @@ export async function syncSleeperLeague(
       teamPreview,
       notes,
       weeklyEmail,
+      badgeAwards,
     };
   } catch (err) {
     return {
@@ -396,5 +447,52 @@ export async function sendWeeklyResultsEmail(
 
   return ok(
     `${weekLabel} results email: ${result.message}${note}`.trim()
+  );
+}
+
+/**
+ * Re-run weekly badge evaluation for a given week (or last completed week).
+ */
+export async function evaluateWeeklyBadgesAction(
+  formData: FormData
+): Promise<ActionResult> {
+  const gate = await requireAdmin();
+  if (!gate.ok) return fail(gate.error);
+
+  const leagueId =
+    String(formData.get("league_id") ?? "").trim() ||
+    SLEEPER_DEFAULT_LEAGUE_ID;
+  const weekRaw = String(formData.get("week") ?? "").trim();
+  const week = weekRaw ? Number.parseInt(weekRaw, 10) : undefined;
+
+  if (weekRaw && (!Number.isFinite(week) || (week ?? 0) < 1)) {
+    return fail("Week must be a positive number");
+  }
+
+  const result = await evaluateWeeklyBadges({
+    leagueId,
+    week: week != null && Number.isFinite(week) ? week : undefined,
+  });
+
+  if (!result.ok) {
+    return fail(result.error ?? "Badge evaluation failed");
+  }
+
+  revalidateAll();
+
+  const awarded =
+    result.inserted.length > 0
+      ? result.inserted
+          .map((a) => `${a.badge_key.replace(/_/g, " ")} → ${a.owner_name}`)
+          .join("; ")
+      : "no new awards (already awarded or no qualifiers)";
+
+  const skipNote =
+    result.skipped.length > 0
+      ? ` Skipped: ${result.skipped.slice(0, 3).join("; ")}`
+      : "";
+
+  return ok(
+    `Week ${result.week} badges: ${awarded}.${skipNote}`.trim()
   );
 }

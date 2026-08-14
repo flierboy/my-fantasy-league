@@ -1,6 +1,7 @@
 import { PublicPageShell } from "@/components/layout/public-page-shell";
-import { badgesByCategory } from "@/lib/data/badges";
+import { badgesByCategory, getBadge } from "@/lib/data/badges";
 import { getOwners } from "@/lib/data/league";
+import { getBadgeAwards, latestWeekLabel } from "@/lib/data/badge-awards";
 import { OwnerBadge } from "@/components/home/owner-badge";
 import { OwnerAvatar } from "@/components/home/owner-avatar";
 
@@ -11,10 +12,16 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function BadgesPage() {
-  const owners = await getOwners();
+  const [owners, { awards }] = await Promise.all([
+    getOwners(),
+    getBadgeAwards({ limit: 200 }),
+  ]);
   const wearers = owners.filter((o) => o.badges.length > 0);
   const groups = badgesByCategory();
   const totalBadges = groups.reduce((n, g) => n + g.badges.length, 0);
+
+  // Recent weekly awards for timeline
+  const recentWeekly = awards.slice(0, 24);
 
   return (
     <PublicPageShell>
@@ -27,11 +34,48 @@ export default async function BadgesPage() {
               Badges
             </h1>
             <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-              {totalBadges} badges of glory, shame, and weekly chaos. Admins
-              assign them on each owner in Admin → Owners.
+              {totalBadges} badges of glory, shame, and weekly chaos. Weekly
+              awards auto-fire after Sleeper sync; season hardware is assigned
+              under Admin → Owners.
             </p>
           </div>
         </header>
+
+        {recentWeekly.length > 0 && (
+          <section>
+            <p className="ff-ribbon text-[10px] !px-3 !py-1">Recent weeks</p>
+            <h2 className="ff-display mt-2.5 text-2xl">Weekly awards</h2>
+            <ul className="ff-card mt-4 divide-y divide-border overflow-hidden">
+              {recentWeekly.map((a) => {
+                const owner = owners.find((o) => o.id === a.owner_id);
+                const badge = getBadge(a.badge_key);
+                return (
+                  <li
+                    key={a.id}
+                    className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm"
+                  >
+                    <OwnerBadge
+                      badgeKey={a.badge_key}
+                      weekLabel={`Week ${a.week}`}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold">
+                        {badge.label}{" "}
+                        <span className="font-mono text-xs font-semibold text-muted-foreground">
+                          · Week {a.week} · {a.season_year}
+                        </span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {owner?.display_name ?? "Owner"}
+                        {a.notes ? ` — ${a.notes}` : ""}
+                      </p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
 
         {groups.map(({ category, badges }) => (
           <section key={category.id} className="space-y-3">
@@ -74,8 +118,8 @@ export default async function BadgesPage() {
           <h2 className="ff-display mt-2.5 text-2xl">On the wall</h2>
           {wearers.length === 0 ? (
             <p className="ff-card mt-4 p-6 text-sm text-muted-foreground">
-              No badges assigned yet. Open Admin → Owners and check the ones
-              that fit.
+              No badges assigned yet. Sync from Sleeper to auto-award weekly
+              ones, or open Admin → Owners for season hardware.
             </p>
           ) : (
             <ul className="ff-card mt-4 divide-y-2 divide-border overflow-hidden">
@@ -94,7 +138,12 @@ export default async function BadgesPage() {
                   </span>
                   <div className="flex flex-wrap gap-1.5">
                     {owner.badges.map((b) => (
-                      <OwnerBadge key={b} badgeKey={b} showLabel />
+                      <OwnerBadge
+                        key={b}
+                        badgeKey={b}
+                        showLabel
+                        weekLabel={latestWeekLabel(awards, owner.id, b)}
+                      />
                     ))}
                   </div>
                 </li>

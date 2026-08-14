@@ -14,6 +14,11 @@ import { OwnerBadge } from "@/components/home/owner-badge";
 import { MoneyChip } from "@/components/home/money-chip";
 import { formatPoints, formatRecord, formatWinPct } from "@/lib/utils";
 import { ScrollableTable } from "@/components/ui/scrollable-table";
+import {
+  getBadgeAwards,
+  latestWeekLabel,
+} from "@/lib/data/badge-awards";
+import { getBadge } from "@/lib/data/badges";
 
 export const dynamic = "force-dynamic";
 
@@ -36,12 +41,14 @@ export default async function OwnerProfilePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [owners, { seasons }, { punishments }, league] = await Promise.all([
-    getOwners(),
-    getPastSeasons({ withStandings: true }),
-    getPunishments({ ownerId: id }),
-    getLeagueSettings(),
-  ]);
+  const [owners, { seasons }, { punishments }, league, { awards }] =
+    await Promise.all([
+      getOwners(),
+      getPastSeasons({ withStandings: true }),
+      getPunishments({ ownerId: id }),
+      getLeagueSettings(),
+      getBadgeAwards({ ownerId: id }),
+    ]);
 
   const owner = owners.find((o) => o.id === id);
   if (!owner) notFound();
@@ -128,13 +135,50 @@ export default async function OwnerProfilePage({
               {owner.badges.length > 0 && (
                 <div className="mt-4 flex flex-wrap justify-center gap-1.5 sm:justify-start">
                   {owner.badges.map((b) => (
-                    <OwnerBadge key={b} badgeKey={b} showLabel />
+                    <OwnerBadge
+                      key={b}
+                      badgeKey={b}
+                      showLabel
+                      weekLabel={latestWeekLabel(awards, owner.id, b)}
+                    />
                   ))}
                 </div>
               )}
             </div>
           </div>
         </header>
+
+        {/* Weekly award log */}
+        {awards.length > 0 && (
+          <section>
+            <p className="ff-ribbon text-[10px] !px-3 !py-1">Weekly hardware</p>
+            <h2 className="ff-display mt-2.5 text-2xl">Badge awards</h2>
+            <ul className="ff-card mt-4 divide-y divide-border overflow-hidden">
+              {awards.map((a) => {
+                const badge = getBadge(a.badge_key);
+                return (
+                  <li
+                    key={a.id}
+                    className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm"
+                  >
+                    <OwnerBadge badgeKey={a.badge_key} />
+                    <div className="min-w-0">
+                      <p className="font-bold">
+                        {badge.label}{" "}
+                        <span className="font-mono text-xs font-semibold text-muted-foreground">
+                          · Week {a.week} · {a.season_year}
+                        </span>
+                      </p>
+                      {a.notes && (
+                        <p className="text-xs text-muted-foreground">{a.notes}</p>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
 
         {/* Championships / podium */}
         <section className="grid gap-3 sm:grid-cols-2">

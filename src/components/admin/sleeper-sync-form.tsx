@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import {
+  evaluateWeeklyBadgesAction,
   sendWeeklyResultsEmail,
   syncSleeperLeague,
   type SleeperSyncSummary,
@@ -12,11 +13,18 @@ import { Button } from "@/components/ui/button";
 import { Field, fieldInputClass } from "./field";
 import { FormMessage } from "./form-message";
 
-export function SleeperSyncForm() {
+export function SleeperSyncForm({
+  autoAwardDefault = true,
+}: {
+  /** From league_settings.auto_award_weekly_badges */
+  autoAwardDefault?: boolean;
+}) {
   const [pending, startTransition] = useTransition();
   const [emailPending, startEmailTransition] = useTransition();
+  const [badgePending, startBadgeTransition] = useTransition();
   const [result, setResult] = useState<SleeperSyncSummary | null>(null);
   const [emailResult, setEmailResult] = useState<ActionResult | null>(null);
+  const [badgeResult, setBadgeResult] = useState<ActionResult | null>(null);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -35,6 +43,16 @@ export function SleeperSyncForm() {
     startEmailTransition(async () => {
       const res = await sendWeeklyResultsEmail(fd);
       setEmailResult(res);
+    });
+  }
+
+  function onBadgeEval(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    setBadgeResult(null);
+    startBadgeTransition(async () => {
+      const res = await evaluateWeeklyBadgesAction(fd);
+      setBadgeResult(res);
     });
   }
 
@@ -89,6 +107,27 @@ export function SleeperSyncForm() {
           <label className="flex items-start gap-2 text-sm font-semibold">
             <input
               type="checkbox"
+              name="auto_award_weekly_badges"
+              value="on"
+              defaultChecked={autoAwardDefault}
+              className="mt-0.5 h-4 w-4 accent-foreground"
+            />
+            <span>
+              Auto-award weekly badges after sync
+              <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                Apex Predator, Blowout Machine, Heavy Hitter, Upset Artist,
+                Bench Blunder, Heartbreak Kid, Squeaked By, Punching Bag. Skips
+                badges when Sleeper data is missing. Requires{" "}
+                <code className="font-mono text-[10px]">
+                  migrate-badge-awards.sql
+                </code>
+                .
+              </span>
+            </span>
+          </label>
+          <label className="flex items-start gap-2 text-sm font-semibold">
+            <input
+              type="checkbox"
               name="email_weekly_after_sync"
               className="mt-0.5 h-4 w-4 accent-foreground"
             />
@@ -103,7 +142,7 @@ export function SleeperSyncForm() {
           <Field
             label="Week override (optional)"
             htmlFor="weekly_week"
-            hint="Leave blank to auto-pick the latest completed week"
+            hint="Leave blank to auto-pick the latest completed week (email + badges)"
           >
             <input
               id="weekly_week"
@@ -168,6 +207,50 @@ export function SleeperSyncForm() {
         <FormMessage result={emailResult} />
       </form>
 
+      <form onSubmit={onBadgeEval} className="ff-card space-y-4 p-5 sm:p-6">
+        <div>
+          <h2 className="ff-display text-xl">Re-run badge evaluation</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Evaluate weekly badges for a specific week from live Sleeper
+            matchups. Safe to re-run — will not duplicate the same owner + badge
+            + week.
+          </p>
+        </div>
+        <Field label="Sleeper league ID" htmlFor="badge_league_id">
+          <input
+            id="badge_league_id"
+            name="league_id"
+            defaultValue={SLEEPER_DEFAULT_LEAGUE_ID}
+            className={fieldInputClass + " font-mono text-xs"}
+            required
+          />
+        </Field>
+        <Field
+          label="Week (optional)"
+          htmlFor="badge_week"
+          hint="Blank = last completed NFL week"
+        >
+          <input
+            id="badge_week"
+            name="week"
+            type="number"
+            min={1}
+            max={22}
+            className={fieldInputClass}
+            placeholder="e.g. 3"
+          />
+        </Field>
+        <Button
+          type="submit"
+          disabled={badgePending}
+          variant="outline"
+          className="w-full sm:w-auto"
+        >
+          {badgePending ? "Evaluating…" : "Re-run badge evaluation"}
+        </Button>
+        <FormMessage result={badgeResult} />
+      </form>
+
       {result && (
         <div
           role="status"
@@ -223,6 +306,11 @@ export function SleeperSyncForm() {
                     {result.weeklyEmail.week != null
                       ? ` (week ${result.weeklyEmail.week})`
                       : ""}
+                  </li>
+                )}
+                {result.badgeAwards && (
+                  <li>
+                    <strong>Weekly badges:</strong> {result.badgeAwards.summary}
                   </li>
                 )}
               </ul>

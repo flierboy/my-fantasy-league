@@ -105,7 +105,10 @@ export type SleeperMatchup = {
   custom_points?: number | null;
   starters?: string[] | null;
   players?: string[] | null;
+  /** Parallel to starters[] when present */
   starters_points?: number[] | null;
+  /** player_id → fantasy points for the week */
+  players_points?: Record<string, number> | null;
 };
 
 /**

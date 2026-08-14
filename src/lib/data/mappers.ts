@@ -71,6 +71,11 @@ export function mapLeague(row: Record<string, unknown>): LeagueSettings {
     season_year: Number(row.season_year ?? 2026),
     trophy_blurb: String(row.trophy_blurb),
     draft_at: row.draft_at == null ? null : String(row.draft_at),
+    auto_award_weekly_badges:
+      row.auto_award_weekly_badges === undefined ||
+      row.auto_award_weekly_badges === null
+        ? true
+        : Boolean(row.auto_award_weekly_badges),
   };
 }
 
