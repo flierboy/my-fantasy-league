@@ -5,14 +5,14 @@
  * Scope: / (this file lives at /sw.js)
  */
 
-const CACHE_VERSION = "ud-shell-v4-crest";
+const CACHE_VERSION = "ud-shell-v5-crest";
 const PRECACHE = [
   "/",
   "/offline.html",
-  "/icons/ud-v4-192.png",
-  "/icons/ud-v4-512.png",
-  "/icons/ud-v4-180.png",
-  "/icons/ud-v4-48.png",
+  "/icons/ud-v5-192.png",
+  "/icons/ud-v5-512.png",
+  "/icons/ud-v5-180.png",
+  "/icons/ud-v5-48.png",
   "/manifest.webmanifest",
 ];
 

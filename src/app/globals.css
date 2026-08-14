@@ -214,6 +214,20 @@ body {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
+/* Wide data tables: soft edge fade on mobile while scrolling */
+.ff-table-scroll {
+  scrollbar-width: thin;
+}
+@media (max-width: 639px) {
+  .ff-table-scroll {
+    background:
+      linear-gradient(to right, #ffffff 30%, rgba(255, 255, 255, 0)) left center /
+        1.25rem 100% no-repeat local,
+      linear-gradient(to left, #ffffff 30%, rgba(255, 255, 255, 0)) right center /
+        1.25rem 100% no-repeat local;
+  }
+}
+
 /* ---------- Display type ---------- */
 .ff-display {
   font-family: var(--font-display), Impact, "Arial Black", sans-serif;

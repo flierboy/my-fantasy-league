@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PublicPageShell } from "@/components/layout/public-page-shell";
 import { getDraftYears, groupPicksByRound } from "@/lib/data/drafts";
+import { ScrollableTable } from "@/components/ui/scrollable-table";
 import { cn } from "@/lib/utils";
 
 export const metadata = {
@@ -111,18 +112,18 @@ export default async function DraftsPage({
                         <p className="ff-ribbon text-[10px] !px-3 !py-1">
                           Round {round}
                         </p>
-                        <div className="ff-card mt-3 overflow-hidden">
+                        <ScrollableTable
+                          className="mt-3"
+                          minWidth="32rem"
+                          hint="Swipe for Pos · NFL · team"
+                        >
                           <table className="w-full text-sm">
                             <thead className="border-b-2 border-foreground bg-[#f4f2ef] text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                               <tr>
                                 <th className="px-3 py-2.5 sm:px-4">Pick</th>
                                 <th className="px-3 py-2.5 sm:px-4">Player</th>
-                                <th className="hidden px-3 py-2.5 sm:table-cell sm:px-4">
-                                  Pos
-                                </th>
-                                <th className="hidden px-3 py-2.5 md:table-cell md:px-4">
-                                  NFL
-                                </th>
+                                <th className="px-3 py-2.5 sm:px-4">Pos</th>
+                                <th className="px-3 py-2.5 sm:px-4">NFL</th>
                                 <th className="px-3 py-2.5 sm:px-4">
                                   Fantasy team
                                 </th>
@@ -140,10 +141,10 @@ export default async function DraftsPage({
                                   <td className="px-3 py-2.5 font-semibold sm:px-4">
                                     {p.player_name}
                                   </td>
-                                  <td className="hidden px-3 py-2.5 font-mono text-xs sm:table-cell sm:px-4">
+                                  <td className="px-3 py-2.5 font-mono text-xs sm:px-4">
                                     {p.position || "—"}
                                   </td>
-                                  <td className="hidden px-3 py-2.5 font-mono text-xs md:table-cell md:px-4">
+                                  <td className="px-3 py-2.5 font-mono text-xs sm:px-4">
                                     {p.nfl_team || "—"}
                                   </td>
                                   <td className="px-3 py-2.5 sm:px-4">
@@ -165,7 +166,7 @@ export default async function DraftsPage({
                               ))}
                             </tbody>
                           </table>
-                        </div>
+                        </ScrollableTable>
                       </section>
                     );
                   })

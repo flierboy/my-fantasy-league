@@ -38,23 +38,23 @@ export const metadata: Metadata = {
     telephone: false,
   },
   icons: {
-    // Versioned ud-v4 crest paths only (no legacy bat / unversioned favicon)
+    // Versioned ud-v5 can crest only (football + Puttin' Points…)
     icon: [
-      { url: "/icons/ud-v4-32.png", sizes: "32x32", type: "image/png" },
-      { url: "/icons/ud-v4-48.png", sizes: "48x48", type: "image/png" },
-      { url: "/icons/ud-v4-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/ud-v4-512.png", sizes: "512x512", type: "image/png" },
+      { url: "/icons/ud-v5-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/ud-v5-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/icons/ud-v5-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/ud-v5-512.png", sizes: "512x512", type: "image/png" },
     ],
     apple: [
       {
-        url: "/icons/ud-v4-180.png",
+        url: "/icons/ud-v5-180.png",
         sizes: "180x180",
         type: "image/png",
       },
     ],
     shortcut: [
       {
-        url: "/icons/ud-v4-192.png",
+        url: "/icons/ud-v5-192.png",
         sizes: "192x192",
         type: "image/png",
       },

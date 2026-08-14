@@ -13,6 +13,7 @@ import { OwnerAvatar } from "@/components/home/owner-avatar";
 import { OwnerBadge } from "@/components/home/owner-badge";
 import { MoneyChip } from "@/components/home/money-chip";
 import { formatPoints, formatRecord, formatWinPct } from "@/lib/utils";
+import { ScrollableTable } from "@/components/ui/scrollable-table";
 
 export const dynamic = "force-dynamic";
 
@@ -183,8 +184,12 @@ export default async function OwnerProfilePage({
               Admin → Past seasons.
             </p>
           ) : (
-            <div className="ff-card mt-4 overflow-x-auto">
-              <table className="w-full min-w-[480px] text-sm">
+            <ScrollableTable
+              className="mt-4"
+              minWidth="34rem"
+              hint="Swipe for Win% · PF · PA"
+            >
+              <table className="w-full text-sm">
                 <thead className="border-b-2 border-foreground bg-[#f4f2ef] text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                   <tr>
                     <th className="px-3 py-3 sm:px-4">Year</th>
@@ -193,9 +198,7 @@ export default async function OwnerProfilePage({
                     <th className="px-3 py-3 text-right sm:px-4">Win%</th>
                     <th className="px-3 py-3 text-right sm:px-4">PF</th>
                     <th className="px-3 py-3 text-right sm:px-4">PA</th>
-                    <th className="hidden px-3 py-3 sm:table-cell sm:px-4">
-                      Team
-                    </th>
+                    <th className="px-3 py-3 sm:px-4">Team</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -230,14 +233,14 @@ export default async function OwnerProfilePage({
                       <td className="px-3 py-3 text-right font-mono tabular-nums text-muted-foreground sm:px-4">
                         {formatPoints(f.points_against)}
                       </td>
-                      <td className="hidden px-3 py-3 text-muted-foreground sm:table-cell sm:px-4">
+                      <td className="px-3 py-3 text-muted-foreground sm:px-4">
                         {f.team_name || "—"}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </div>
+            </ScrollableTable>
           )}
         </section>
 

@@ -9,6 +9,7 @@ import {
 } from "@/lib/data/seasons";
 import { formatPoints, formatRecord, formatWinPct } from "@/lib/utils";
 import { OwnerAvatar } from "@/components/home/owner-avatar";
+import { ScrollableTable } from "@/components/ui/scrollable-table";
 
 export const metadata = {
   title: "History",
@@ -145,7 +146,10 @@ export default async function HistoryPage() {
                       No standings rows for this season yet.
                     </p>
                   ) : (
-                    <div className="ff-card overflow-hidden">
+                    <ScrollableTable
+                      minWidth="34rem"
+                      hint="Swipe for Win% · PF · PA"
+                    >
                       <table className="w-full text-sm">
                         <thead className="border-b-2 border-foreground bg-[#f4f2ef] text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                           <tr>
@@ -160,7 +164,7 @@ export default async function HistoryPage() {
                             <th className="px-3 py-3 text-right sm:px-4">
                               PF
                             </th>
-                            <th className="hidden px-3 py-3 text-right sm:table-cell sm:px-4">
+                            <th className="px-3 py-3 text-right sm:px-4">
                               PA
                             </th>
                           </tr>
@@ -238,7 +242,7 @@ export default async function HistoryPage() {
                                 <td className="px-3 py-3 text-right font-mono tabular-nums sm:px-4">
                                   {formatPoints(row.points_for)}
                                 </td>
-                                <td className="hidden px-3 py-3 text-right font-mono tabular-nums text-muted-foreground sm:table-cell sm:px-4">
+                                <td className="px-3 py-3 text-right font-mono tabular-nums text-muted-foreground sm:px-4">
                                   {formatPoints(row.points_against)}
                                 </td>
                               </tr>
@@ -246,7 +250,7 @@ export default async function HistoryPage() {
                           })}
                         </tbody>
                       </table>
-                    </div>
+                    </ScrollableTable>
                   )}
                 </div>
               );
@@ -385,8 +389,12 @@ export default async function HistoryPage() {
             All-time from past season standings (PF / PA / Win%). Falls back to
             owner W-L when no past rows exist. Sorted by wins, then PF.
           </p>
-          <div className="ff-card mt-4 overflow-x-auto">
-            <table className="w-full min-w-[520px] text-sm">
+          <ScrollableTable
+            className="mt-4"
+            minWidth="36rem"
+            hint="Swipe for Win% · PF · PA · cash"
+          >
+            <table className="w-full text-sm">
               <thead className="border-b-2 border-foreground bg-[#f4f2ef] text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 <tr>
                   <th className="px-3 py-3 sm:px-4">#</th>
@@ -395,7 +403,7 @@ export default async function HistoryPage() {
                   <th className="px-3 py-3 text-right sm:px-4">Win%</th>
                   <th className="px-3 py-3 text-right sm:px-4">PF</th>
                   <th className="px-3 py-3 text-right sm:px-4">PA</th>
-                  <th className="hidden px-3 py-3 text-right sm:table-cell sm:px-4">
+                  <th className="px-3 py-3 text-right sm:px-4">
                     Prize $
                   </th>
                 </tr>
@@ -439,7 +447,7 @@ export default async function HistoryPage() {
                           ? "—"
                           : formatPoints(c.points_against)}
                       </td>
-                      <td className="hidden px-3 py-3 text-right font-mono text-muted-foreground sm:table-cell sm:px-4">
+                      <td className="px-3 py-3 text-right font-mono text-muted-foreground sm:px-4">
                         ${owner.prize_money.toLocaleString()}
                       </td>
                     </tr>
@@ -447,7 +455,7 @@ export default async function HistoryPage() {
                 })}
               </tbody>
             </table>
-          </div>
+          </ScrollableTable>
         </section>
       </div>
     </PublicPageShell>

@@ -1,6 +1,7 @@
 import { getMatchupsData } from "@/lib/data/dashboard";
 import { formatRecord } from "@/lib/utils";
 import { OwnerAvatar } from "@/components/home/owner-avatar";
+import { ScrollableTable } from "@/components/ui/scrollable-table";
 
 export const metadata = {
   title: "Matchups",
@@ -117,16 +118,14 @@ export default async function MatchupsPage() {
 
       <section>
         <h2 className="ff-display mb-3 text-xl">Standings</h2>
-        <div className="overflow-hidden rounded-xl border-2 border-foreground bg-white shadow-sm">
+        <ScrollableTable minWidth="28rem" hint="Swipe for full standings">
           <table className="w-full text-sm">
             <thead className="border-b-2 border-foreground bg-[#f4f2ef] text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">#</th>
                 <th className="px-4 py-3">Owner</th>
                 <th className="px-4 py-3 text-right">W-L</th>
-                <th className="hidden px-4 py-3 text-right sm:table-cell">
-                  PF
-                </th>
+                <th className="px-4 py-3 text-right">PF</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -147,7 +146,7 @@ export default async function MatchupsPage() {
                     <td className="px-4 py-3 text-right font-mono font-bold tabular-nums">
                       {formatRecord(row.wins, row.losses, row.ties)}
                     </td>
-                    <td className="hidden px-4 py-3 text-right font-mono text-muted-foreground sm:table-cell">
+                    <td className="px-4 py-3 text-right font-mono text-muted-foreground">
                       {row.points_for > 0 ? row.points_for.toFixed(1) : "—"}
                     </td>
                   </tr>
@@ -155,7 +154,7 @@ export default async function MatchupsPage() {
               })}
             </tbody>
           </table>
-        </div>
+        </ScrollableTable>
         {standings[0]?.id.startsWith("fallback-") && (
           <p className="mt-2 text-xs text-muted-foreground">
             Showing franchise all-time W-L until season standings rows exist.

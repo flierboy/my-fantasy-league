@@ -1,6 +1,7 @@
 import { getDuesData } from "@/lib/data/dashboard";
 import { formatMoney } from "@/lib/utils";
 import { OwnerAvatar } from "@/components/home/owner-avatar";
+import { ScrollableTable } from "@/components/ui/scrollable-table";
 
 export const metadata = {
   title: "Dues",
@@ -47,7 +48,7 @@ export default async function DuesPage() {
         />
       </div>
 
-      <div className="overflow-hidden rounded-xl border-2 border-foreground bg-white shadow-sm">
+      <ScrollableTable minWidth="28rem" hint="Swipe for due · paid · status">
         <table className="w-full text-sm">
           <thead className="border-b-2 border-foreground bg-[#f4f2ef] text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
             <tr>
@@ -95,7 +96,7 @@ export default async function DuesPage() {
             })}
           </tbody>
         </table>
-      </div>
+      </ScrollableTable>
 
       <p className="text-xs text-muted-foreground">
         Update payments in Supabase Table Editor →{" "}

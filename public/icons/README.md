@@ -1,25 +1,19 @@
-# Upper Decker crest icons (v4)
+# Upper Decker crest icons (v5)
 
-All PWA / favicon / app icons use the **Upper Decker can crest**
-(toilet paper + blue spray can + broom, “UPPER DECKER” text, rope ring).
+Official **Upper Decker can crest** (circular lid): football, “UPPER DECKER”,
+“Puttin’ Points in Your Upper Lip”, EST. 2023 / Fantasy Football League 2026.
 
-**Not** the old baseball-bat placeholder.
+Versioned `ud-v5-*` paths bust caches of older bat / wrong-logo art.
 
-Versioned filenames (`ud-v4-*`) bust browser/PWA caches of older art.
+| File | Role |
+|------|------|
+| `logo-master-v5.png` | 1024 app-icon master |
+| `logo-crest-source-v5.jpg` | full marketing crest source |
+| `ud-v5-32` … `ud-v5-512` | PWA / favicon sizes |
+| `ud-v5-180` | Apple touch |
+| `ud-v5-512-maskable` | maskable home-screen |
 
-| File | Size / role |
-|------|-------------|
-| `logo-master-v4.png` | 1024 master |
-| `logo-source.png` / `logo-crest-source-v4.png` | original crest reference |
-| `ud-v4-32.png` … `ud-v4-512.png` | PWA / favicon sizes |
-| `ud-v4-180.png` | Apple touch |
-| `ud-v4-512-maskable.png` | maskable home-screen |
-| `ud-v4-favicon-32.png` / `ud-v4-favicon-48.png` | explicit favicon paths |
+Also: `src/app/icon.png` (192), `src/app/apple-icon.png` (180),
+`public/favicon.png` / `favicon-32.png`.
 
-Also mirrored to:
-
-- `src/app/icon.png` (192 — Next App Router)
-- `src/app/apple-icon.png` (180)
-- `public/favicon.png` / `public/favicon-32.png` (crest, not bats)
-
-Service worker cache: `ud-shell-v4-crest`
+Service worker cache: `ud-shell-v5-crest`

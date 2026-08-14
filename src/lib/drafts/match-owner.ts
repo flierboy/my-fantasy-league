@@ -31,13 +31,23 @@ const ALIASES: Record<string, string[]> = {
     "ham",
     "hammy",
   ],
-  bigbrownstain: ["bigbrownstain", "big brown stain", "bbs", "brown stain"],
+  bigbrownstain: [
+    "bigbrownstain",
+    "big brown stain",
+    "bbs",
+    "brown stain",
+    "brown",
+  ],
   "big lloyd": [
     "big lloyd",
     "lloyd",
     "biglloyd",
     "davids dangerous team",
     "lloyd assaults women",
+    "bish",
+    "benny backshots",
+    "benny",
+    "backshots",
   ],
   whitstits: [
     "whitstits",
@@ -54,12 +64,20 @@ const ALIASES: Record<string, string[]> = {
     "playofflock",
     "maisons magnificent team",
     "greenhorn mase",
+    "maison",
   ],
   "starvin marvin": ["starvin marvin", "marvin", "starvin", "starving marvin"],
-  "benny backshots": ["benny backshots", "benny", "backshots"],
-  // Extra fantasy names that may map if display_name contains token
+  "benny backshots": ["benny backshots", "benny", "backshots", "bish"],
+  // Short draft-order labels (serpentine fix) → match via owner key aliases above
   reesee: ["reesee", "reese"],
-  zack: ["zack", "zacks honorable team"],
+  reese: ["reese", "reesee"],
+  zack: ["zack", "zach", "zacks honorable team"],
+  sco: ["sco", "scott"],
+  brown: ["brown", "bigbrownstain", "big brown stain", "bbs"],
+  bish: ["bish", "big lloyd", "lloyd", "benny", "benny backshots"],
+  mase: ["mase", "maison", "playoff lock mase", "greenhorn mase"],
+  hamie: ["hamie", "ham bone", "hambone", "team hamie", "ham"],
+  whit: ["whit", "whitstits", "olewhit", "whits"],
 };
 
 function aliasKeyForOwner(owner: OwnerMatchTarget): string | null {
@@ -86,13 +104,32 @@ export function matchOwnerId(
     }
   }
 
-  // Alias table
+  // Alias table: owner key → fantasy aliases
   for (const o of owners) {
     const key = aliasKeyForOwner(o);
     if (!key) continue;
     const aliases = ALIASES[key] ?? [];
     for (const a of aliases) {
       if (n === a || n.includes(a) || a.includes(n)) return o.id;
+    }
+  }
+
+  // Reverse: fantasy label is an alias key (e.g. "sco", "bish", "whit")
+  for (const [key, aliases] of Object.entries(ALIASES)) {
+    if (n !== key && !aliases.some((a) => n === a)) continue;
+    for (const o of owners) {
+      const od = normalizeName(o.display_name);
+      const ot = o.team_name ? normalizeName(o.team_name) : "";
+      if (
+        od === key ||
+        od.includes(key) ||
+        key.includes(od) ||
+        aliases.some(
+          (a) => od === a || od.includes(a) || (ot && (ot === a || ot.includes(a)))
+        )
+      ) {
+        return o.id;
+      }
     }
   }
 
