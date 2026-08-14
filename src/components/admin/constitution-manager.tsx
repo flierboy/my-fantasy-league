@@ -1,7 +1,7 @@
 "use client";
 
-import type { ConstitutionSection } from "@/lib/data/constitution";
-import { CONSTITUTION_SECTION_KEYS } from "@/lib/data/constitution";
+import type { ConstitutionSection } from "@/lib/data/constitution-shared";
+import { CONSTITUTION_SECTION_KEYS } from "@/lib/data/constitution-shared";
 import {
   createConstitutionSection,
   deleteConstitutionSection,

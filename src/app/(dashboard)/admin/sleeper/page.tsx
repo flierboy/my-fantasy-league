@@ -18,14 +18,17 @@ export default async function AdminSleeperPage() {
           Sleeper sync
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Pull league name, users/teams, and standings from Sleeper league{" "}
+          Weekly ops for league{" "}
           <code className="font-mono text-xs">{SLEEPER_DEFAULT_LEAGUE_ID}</code>
-          . Also awards weekly badges and can email Week X Results once the
-          season is underway.
+          : users/rosters, season standings, matchups for a week, optional
+          badges + results email.
         </p>
       </header>
 
-      <SleeperSyncForm autoAwardDefault={autoAward} />
+      <SleeperSyncForm
+        autoAwardDefault={autoAward}
+        lastSyncAt={league.last_sleeper_sync_at ?? null}
+      />
     </div>
   );
 }

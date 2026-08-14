@@ -15,9 +15,11 @@ import { FormMessage } from "./form-message";
 
 export function SleeperSyncForm({
   autoAwardDefault = true,
+  lastSyncAt = null,
 }: {
   /** From league_settings.auto_award_weekly_badges */
   autoAwardDefault?: boolean;
+  lastSyncAt?: string | null;
 }) {
   const [pending, startTransition] = useTransition();
   const [emailPending, startEmailTransition] = useTransition();
@@ -62,9 +64,21 @@ export function SleeperSyncForm({
         <div>
           <h2 className="ff-display text-xl">Sync from Sleeper</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Manual pull from the public Sleeper API (no login required). One
-            click — not a live background sync.
+            Pulls users/rosters, season standings, and weekly matchups for the
+            target week. Public API — no Sleeper login.
           </p>
+          {lastSyncAt && (
+            <p className="mt-2 text-xs font-semibold text-muted-foreground">
+              Last successful sync ·{" "}
+              {new Date(lastSyncAt).toLocaleString(undefined, {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+              })}
+            </p>
+          )}
         </div>
 
         <Field label="Sleeper league ID" htmlFor="league_id">
@@ -84,7 +98,16 @@ export function SleeperSyncForm({
             defaultChecked
             className="h-4 w-4 accent-foreground"
           />
-          Update W-L / standings on matched owners
+          Update W-L / season standings (PF, PA, rank)
+        </label>
+        <label className="flex items-center gap-2 text-sm font-semibold">
+          <input
+            type="checkbox"
+            name="sync_matchups"
+            defaultChecked
+            className="h-4 w-4 accent-foreground"
+          />
+          Pull weekly matchups into site tables (replaces that week)
         </label>
         <label className="flex items-center gap-2 text-sm font-semibold">
           <input
@@ -104,45 +127,10 @@ export function SleeperSyncForm({
         </label>
 
         <div className="rounded-lg border border-border bg-[#f4f2ef] p-3 space-y-3">
-          <label className="flex items-start gap-2 text-sm font-semibold">
-            <input
-              type="checkbox"
-              name="auto_award_weekly_badges"
-              value="on"
-              defaultChecked={autoAwardDefault}
-              className="mt-0.5 h-4 w-4 accent-foreground"
-            />
-            <span>
-              Auto-award weekly badges after sync
-              <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
-                Apex Predator, Blowout Machine, Heavy Hitter, Upset Artist,
-                Bench Blunder, Heartbreak Kid, Squeaked By, Punching Bag. Skips
-                badges when Sleeper data is missing. Requires{" "}
-                <code className="font-mono text-[10px]">
-                  migrate-badge-awards.sql
-                </code>
-                .
-              </span>
-            </span>
-          </label>
-          <label className="flex items-start gap-2 text-sm font-semibold">
-            <input
-              type="checkbox"
-              name="email_weekly_after_sync"
-              className="mt-0.5 h-4 w-4 accent-foreground"
-            />
-            <span>
-              Email weekly results after sync
-              <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
-                Only when the season is underway (not pre-draft). Uses previous
-                NFL week by default. Requires RESEND_API_KEY + owner emails.
-              </span>
-            </span>
-          </label>
           <Field
-            label="Week override (optional)"
+            label="Week (optional)"
             htmlFor="weekly_week"
-            hint="Leave blank to auto-pick the latest completed week (email + badges)"
+            hint="Blank = last completed NFL week. Used for matchups, badges, and email."
           >
             <input
               id="weekly_week"
@@ -154,6 +142,35 @@ export function SleeperSyncForm({
               placeholder="e.g. 3"
             />
           </Field>
+          <label className="flex items-start gap-2 text-sm font-semibold">
+            <input
+              type="checkbox"
+              name="auto_award_weekly_badges"
+              value="on"
+              defaultChecked={autoAwardDefault}
+              className="mt-0.5 h-4 w-4 accent-foreground"
+            />
+            <span>
+              Auto-award weekly badges after sync
+              <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                Apex Predator, Blowout Machine, etc. Safe re-run (no duplicate
+                same owner + badge + week).
+              </span>
+            </span>
+          </label>
+          <label className="flex items-start gap-2 text-sm font-semibold">
+            <input
+              type="checkbox"
+              name="email_weekly_after_sync"
+              className="mt-0.5 h-4 w-4 accent-foreground"
+            />
+            <span>
+              Send weekly results email after sync
+              <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                Requires RESEND_API_KEY + owner emails on file.
+              </span>
+            </span>
+          </label>
         </div>
 
         <Button type="submit" disabled={pending} className="w-full sm:w-auto">
@@ -296,6 +313,14 @@ export function SleeperSyncForm({
                 <li>
                   <strong>Standings rows:</strong> {result.standingsUpserted}
                 </li>
+                {result.syncedWeek != null && (
+                  <li>
+                    <strong>Synced week:</strong> {result.syncedWeek}
+                    {result.matchupsWritten != null
+                      ? ` · ${result.matchupsWritten} matchups`
+                      : ""}
+                  </li>
+                )}
                 <li>
                   <strong>League name updated:</strong>{" "}
                   {result.settingsUpdated ? "yes" : "no"}
@@ -314,6 +339,11 @@ export function SleeperSyncForm({
                   </li>
                 )}
               </ul>
+              {result.notes?.[0] && (
+                <p className="mt-3 rounded-lg bg-[#f4f2ef] px-3 py-2 text-sm font-semibold">
+                  {result.notes[0]}
+                </p>
+              )}
 
               {result.teamPreview && result.teamPreview.length > 0 && (
                 <div className="mt-4 overflow-x-auto">
@@ -352,11 +382,11 @@ export function SleeperSyncForm({
               )}
             </>
           )}
-          {result.notes && result.notes.length > 0 && (
+          {result.notes && result.notes.length > 1 && (
             <div className="mt-4 rounded-lg bg-[#f4f2ef] p-3 text-xs text-muted-foreground">
               <p className="font-bold uppercase tracking-wider">Notes</p>
               <ul className="mt-1 list-disc space-y-1 pl-4">
-                {result.notes.map((n) => (
+                {result.notes.slice(1).map((n) => (
                   <li key={n.slice(0, 40)}>{n}</li>
                 ))}
               </ul>

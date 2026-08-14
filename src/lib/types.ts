@@ -226,6 +226,8 @@ export interface LeagueSettings {
   auto_award_weekly_badges?: boolean;
   /** Opening paragraph for /constitution (optional until migrate-constitution.sql). */
   constitution_intro?: string | null;
+  /** Last successful Admin → Sleeper sync (ISO). */
+  last_sleeper_sync_at?: string | null;
 }
 
 export interface DuePayment {

@@ -10,6 +10,10 @@ import {
   fetchSleeperUsers,
 } from "@/lib/sleeper/client";
 import { buildSleeperPreview, matchOwnerId } from "@/lib/sleeper/map";
+import {
+  computeStandingsRanks,
+  syncWeeklyMatchupsFromSleeper,
+} from "@/lib/sleeper/sync-week";
 import { sendWeeklyResultsEmailToOwners } from "@/lib/email/weekly";
 import { evaluateWeeklyBadges } from "@/lib/badges/weekly-eval";
 import type { ActionResult } from "./types";
@@ -31,6 +35,11 @@ export type SleeperSyncSummary = {
   ownersUnmatched?: string[];
   standingsUpserted?: number;
   settingsUpdated?: boolean;
+  /** Weekly matchups written for the synced week */
+  matchupsWritten?: number;
+  /** Week number used for matchups / badges / email */
+  syncedWeek?: number;
+  lastSyncAt?: string;
   teamPreview?: {
     teamName: string;
     userDisplayName: string | null;
@@ -85,10 +94,11 @@ export async function syncSleeperLeague(
   const updateRecords = formData.get("update_records") !== "off"; // default on
   const emailWeeklyAfterSync =
     formData.get("email_weekly_after_sync") === "on";
-  // Default ON unless explicitly unchecked (hidden "off" not used — checkbox only present when on)
   const autoAwardBadges =
     formData.get("auto_award_weekly_badges") === "on" ||
     formData.get("auto_award_weekly_badges") === "true";
+  // Sync weekly matchups (default on)
+  const syncMatchups = formData.get("sync_matchups") !== "off";
   const weeklyWeekRaw = String(formData.get("weekly_week") ?? "").trim();
   const weeklyWeekParsed = weeklyWeekRaw
     ? Number.parseInt(weeklyWeekRaw, 10)
@@ -107,6 +117,18 @@ export async function syncSleeperLeague(
     const preview = buildSleeperPreview(league, users, rosters);
     const seasonYear = Number(league.season) || new Date().getFullYear();
 
+    // Resolve week for matchups / badges / email
+    const displayWeek = nflState
+      ? Number(nflState.display_week || nflState.week || 1)
+      : 1;
+    const syncedWeek =
+      weeklyWeekParsed != null &&
+      Number.isFinite(weeklyWeekParsed) &&
+      weeklyWeekParsed >= 1
+        ? weeklyWeekParsed
+        : Math.max(1, displayWeek > 1 ? displayWeek - 1 : displayWeek);
+    const weekIsComplete = syncedWeek < displayWeek;
+
     if (preview.openRosterSlots > 0) {
       notes.push(
         `${preview.openRosterSlots} roster slot(s) have no Sleeper user yet (pre-draft / invites pending).`
@@ -122,6 +144,9 @@ export async function syncSleeperLeague(
         `NFL state: season ${nflState.season} · week ${nflState.display_week} · ${nflState.season_type}`
       );
     }
+    notes.push(
+      `Target week for matchups/badges: ${syncedWeek}${weekIsComplete ? " (complete)" : " (may still be in progress)"}`
+    );
 
     const supabase = await createClient();
 
@@ -145,7 +170,7 @@ export async function syncSleeperLeague(
 
     const { data: existingOwners, error: ownersErr } = await supabase
       .from("owners")
-      .select("id, display_name, team_name");
+      .select("id, display_name, team_name, sleeper_username");
     if (ownersErr) {
       return {
         ok: false,
@@ -153,11 +178,25 @@ export async function syncSleeperLeague(
       };
     }
 
-    let owners = existingOwners ?? [];
+    let owners = (existingOwners ?? []) as {
+      id: string;
+      display_name: string;
+      team_name: string | null;
+      sleeper_username?: string | null;
+    }[];
     let ownersUpdated = 0;
     let ownersCreated = 0;
     const unmatched: string[] = [];
     const teamPreview: SleeperSyncSummary["teamPreview"] = [];
+    const rosterToOwner = new Map<number, string>();
+    const standingsTeams: {
+      ownerId: string;
+      wins: number;
+      losses: number;
+      ties: number;
+      pointsFor: number;
+      pointsAgainst: number;
+    }[] = [];
 
     for (const team of preview.teams) {
       if (team.openSlot) {
@@ -184,6 +223,7 @@ export async function syncSleeperLeague(
           .insert({
             display_name: display,
             team_name: team.teamName,
+            sleeper_username: team.userDisplayName,
             wins: updateRecords ? team.wins : 0,
             losses: updateRecords ? team.losses : 0,
             ties: updateRecords ? team.ties : 0,
@@ -192,7 +232,7 @@ export async function syncSleeperLeague(
             is_admin: false,
             sort_order: owners.length + 1,
           })
-          .select("id, display_name, team_name")
+          .select("id, display_name, team_name, sleeper_username")
           .single();
 
         if (createErr || !created) {
@@ -224,6 +264,8 @@ export async function syncSleeperLeague(
         continue;
       }
 
+      rosterToOwner.set(team.rosterId, ownerId);
+
       const siteOwner = owners.find((o) => o.id === ownerId);
       matchedLabel =
         matchedLabel || `matched → ${siteOwner?.display_name ?? ownerId}`;
@@ -231,6 +273,9 @@ export async function syncSleeperLeague(
       const patch: Record<string, unknown> = {
         team_name: team.teamName,
       };
+      if (team.userDisplayName) {
+        patch.sleeper_username = team.userDisplayName;
+      }
       if (updateRecords) {
         patch.wins = team.wins;
         patch.losses = team.losses;
@@ -248,14 +293,36 @@ export async function syncSleeperLeague(
         ownersUpdated += 1;
       }
 
-      // Season standings snapshot
-      let standingsOk = false;
       if (updateRecords) {
+        standingsTeams.push({
+          ownerId,
+          wins: team.wins,
+          losses: team.losses,
+          ties: team.ties,
+          pointsFor: team.pointsFor,
+          pointsAgainst: team.pointsAgainst,
+        });
+      }
+
+      teamPreview?.push({
+        teamName: team.teamName,
+        userDisplayName: team.userDisplayName,
+        record: `${team.wins}-${team.losses}-${team.ties}`,
+        matchedOwner: matchedLabel,
+      });
+    }
+
+    // Season-to-date standings with proper rank (W-L then PF)
+    let standingsUpserted = 0;
+    if (updateRecords && standingsTeams.length > 0) {
+      const ranks = computeStandingsRanks(standingsTeams);
+      for (const t of standingsTeams) {
+        const rank = ranks.get(t.ownerId) ?? 0;
         const { data: existing } = await supabase
           .from("standings")
           .select("id")
           .eq("season", seasonYear)
-          .eq("owner_id", ownerId)
+          .eq("owner_id", t.ownerId)
           .is("week", null)
           .maybeSingle();
 
@@ -263,43 +330,32 @@ export async function syncSleeperLeague(
           const { error } = await supabase
             .from("standings")
             .update({
-              wins: team.wins,
-              losses: team.losses,
-              ties: team.ties,
-              points_for: team.pointsFor,
-              points_against: team.pointsAgainst,
-              rank: team.waiverPosition ?? 0,
+              wins: t.wins,
+              losses: t.losses,
+              ties: t.ties,
+              points_for: t.pointsFor,
+              points_against: t.pointsAgainst,
+              rank,
             })
             .eq("id", existing.id);
-          standingsOk = !error;
+          if (!error) standingsUpserted += 1;
         } else {
           const { error } = await supabase.from("standings").insert({
             season: seasonYear,
             week: null,
-            owner_id: ownerId,
-            wins: team.wins,
-            losses: team.losses,
-            ties: team.ties,
-            points_for: team.pointsFor,
-            points_against: team.pointsAgainst,
-            rank: team.waiverPosition ?? 0,
+            owner_id: t.ownerId,
+            wins: t.wins,
+            losses: t.losses,
+            ties: t.ties,
+            points_for: t.pointsFor,
+            points_against: t.pointsAgainst,
+            rank,
           });
-          standingsOk = !error;
+          if (!error) standingsUpserted += 1;
         }
       }
-
-      teamPreview?.push({
-        teamName: team.teamName,
-        userDisplayName: team.userDisplayName,
-        record: `${team.wins}-${team.losses}-${team.ties}`,
-        matchedOwner: matchedLabel + (standingsOk ? " · standings ok" : ""),
-      });
+      notes.push(`Standings updated for ${standingsUpserted} owner(s).`);
     }
-
-    // Count standings from preview length of successful matches roughly
-    const standingsUpserted = teamPreview.filter((t) =>
-      t.matchedOwner?.includes("standings ok")
-    ).length;
 
     if (unmatched.length) {
       notes.push(
@@ -307,26 +363,54 @@ export async function syncSleeperLeague(
       );
     }
 
-    revalidateAll();
+    // Weekly matchups from Sleeper (prefer over manual for this week)
+    let matchupsWritten = 0;
+    const seasonUnderway =
+      preview.status !== "pre_draft" && preview.status !== "drafting";
+
+    if (syncMatchups && seasonUnderway && rosterToOwner.size > 0) {
+      const matchResult = await syncWeeklyMatchupsFromSleeper({
+        supabase,
+        leagueId,
+        season: seasonYear,
+        week: syncedWeek,
+        rosterToOwner,
+        weekIsComplete,
+      });
+      matchupsWritten = matchResult.matchupsWritten;
+      notes.push(...matchResult.notes);
+    } else if (syncMatchups && !seasonUnderway) {
+      notes.push("Skipped weekly matchups — league is still pre-draft/drafting.");
+    }
+
+    // Stamp last successful sync
+    const lastSyncAt = new Date().toISOString();
+    const { error: syncStampErr } = await supabase
+      .from("league_settings")
+      .update({
+        last_sleeper_sync_at: lastSyncAt,
+        season_year: seasonYear,
+        updated_at: lastSyncAt,
+      })
+      .eq("id", 1);
+    if (syncStampErr) {
+      notes.push(
+        `Could not save last_sleeper_sync_at (run migrate-sleeper-sync-meta.sql): ${syncStampErr.message}`
+      );
+    }
 
     let weeklyEmail: SleeperSyncSummary["weeklyEmail"];
     let badgeAwards: SleeperSyncSummary["badgeAwards"];
 
-    // Auto weekly email / badges only when season is underway (not pre_draft)
-    const seasonUnderway =
-      preview.status !== "pre_draft" && preview.status !== "drafting";
     if (emailWeeklyAfterSync) {
       if (!seasonUnderway) {
         notes.push(
-          "Skipped weekly results email — league is still pre-draft/drafting. Use “Send weekly email” once the season starts."
+          "Skipped weekly results email — league is still pre-draft/drafting."
         );
       } else {
         const emailResult = await sendWeeklyResultsEmailToOwners({
           leagueId,
-          week:
-            weeklyWeekParsed != null && Number.isFinite(weeklyWeekParsed)
-              ? weeklyWeekParsed
-              : undefined,
+          week: syncedWeek,
         });
         weeklyEmail = {
           sent: emailResult.sent,
@@ -335,7 +419,7 @@ export async function syncSleeperLeague(
           week: emailResult.week,
         };
         notes.push(
-          `Weekly email (week ${emailResult.week ?? "?"}): ${emailResult.message}`
+          `Weekly email (week ${emailResult.week ?? syncedWeek}): ${emailResult.message}`
         );
         if (emailResult.notes?.length) {
           notes.push(...emailResult.notes);
@@ -343,7 +427,6 @@ export async function syncSleeperLeague(
       }
     }
 
-    // Auto weekly badges (checkbox default on in UI when season underway)
     if (autoAwardBadges) {
       if (!seasonUnderway) {
         notes.push(
@@ -352,10 +435,7 @@ export async function syncSleeperLeague(
       } else {
         const badgeResult = await evaluateWeeklyBadges({
           leagueId,
-          week:
-            weeklyWeekParsed != null && Number.isFinite(weeklyWeekParsed)
-              ? weeklyWeekParsed
-              : undefined,
+          week: syncedWeek,
           seasonYear,
         });
         badgeAwards = {
@@ -378,6 +458,20 @@ export async function syncSleeperLeague(
       }
     }
 
+    // Headline summary for admin UI
+    const headline = seasonUnderway
+      ? `Week ${syncedWeek} synced — ${matchupsWritten} matchup${matchupsWritten === 1 ? "" : "s"}, standings updated${
+          badgeAwards?.awarded?.length
+            ? `, badges: ${badgeAwards.awarded
+                .map((s) => s.replace("→", " → ").replace(/_/g, " "))
+                .join(", ")}`
+            : ""
+        }`
+      : `Sync complete (pre-season) — ${ownersUpdated} owners updated`;
+    notes.unshift(headline);
+
+    revalidateAll();
+
     return {
       ok: true,
       leagueId: preview.leagueId,
@@ -392,6 +486,9 @@ export async function syncSleeperLeague(
       ownersUnmatched: unmatched,
       standingsUpserted,
       settingsUpdated,
+      matchupsWritten,
+      syncedWeek,
+      lastSyncAt,
       teamPreview,
       notes,
       weeklyEmail,

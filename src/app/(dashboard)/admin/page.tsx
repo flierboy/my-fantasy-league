@@ -133,6 +133,22 @@ export default async function AdminHomePage() {
             Manage {league.name} without leaving the site
             {owner ? ` · signed in as ${owner.display_name}` : ""}.
           </p>
+          {league.last_sleeper_sync_at && (
+            <p className="mt-2 text-xs font-semibold text-muted-foreground">
+              Last successful Sleeper sync ·{" "}
+              {new Date(league.last_sleeper_sync_at).toLocaleString(undefined, {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+              })}
+              {" · "}
+              <Link href="/admin/sleeper" className="underline">
+                Sync now →
+              </Link>
+            </p>
+          )}
         </div>
       </header>
 

@@ -76,6 +76,10 @@ export function mapLeague(row: Record<string, unknown>): LeagueSettings {
       row.auto_award_weekly_badges === null
         ? true
         : Boolean(row.auto_award_weekly_badges),
+    last_sleeper_sync_at:
+      row.last_sleeper_sync_at == null
+        ? null
+        : String(row.last_sleeper_sync_at),
   };
 }
 
