@@ -8,7 +8,7 @@ export const metadata = {
 };
 
 export default async function TrashTalkPage() {
-  const [{ posts, source }, owner] = await Promise.all([
+  const [{ posts }, owner] = await Promise.all([
     getTrashTalkData(),
     getCurrentOwner(),
   ]);
@@ -19,11 +19,7 @@ export default async function TrashTalkPage() {
         <p className="ff-ribbon">Smack</p>
         <h1 className="ff-display mt-2 text-3xl tracking-tight">Trash talk</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          League message board
-          {source === "supabase"
-            ? " · live Supabase + Realtime refresh"
-            : ""}
-          .
+          League message board — keep it spicy, keep it moving.
         </p>
       </header>
 

@@ -59,14 +59,13 @@ export default async function HistoryPage() {
             </p>
             {source === "placeholder" && (
               <p className="mt-3 text-xs font-semibold text-muted-foreground">
-                Showing starter content until history loads from the database
-                (Admin → History).
+                History will fill in as seasons are recorded.
               </p>
             )}
-            {source === "supabase" && entries.length === 0 && (
+            {source === "supabase" && entries.length === 0 && seasons.length === 0 && (
               <p className="mt-3 text-xs font-semibold text-muted-foreground">
-                No history entries yet — commissioners can add them under Admin →
-                History.
+                No history entries yet — check back after a few seasons of
+                glory (and shame).
               </p>
             )}
           </div>
@@ -153,8 +152,12 @@ export default async function HistoryPage() {
                       <table className="w-full text-sm">
                         <thead className="border-b-2 border-foreground bg-[#f4f2ef] text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                           <tr>
-                            <th className="px-3 py-3 sm:px-4">#</th>
-                            <th className="px-3 py-3 sm:px-4">Team / owner</th>
+                            <th className="ff-sticky-rank px-3 py-3 sm:px-4">
+                              #
+                            </th>
+                            <th className="ff-sticky-team px-3 py-3 sm:px-4">
+                              Team / owner
+                            </th>
                             <th className="px-3 py-3 text-right sm:px-4">
                               W-L-T
                             </th>
@@ -175,26 +178,33 @@ export default async function HistoryPage() {
                               row.owner?.display_name ||
                               row.team_name ||
                               "—";
+                            // Hardware only for explicit champ / runner-up — never every row
                             const champ =
-                              row.is_champion ||
-                              row.owner_id === season.champion_owner_id;
+                              row.is_champion === true ||
+                              (Boolean(season.champion_owner_id) &&
+                                row.owner_id === season.champion_owner_id);
+                            const runnerUp =
+                              !champ &&
+                              (row.is_runner_up === true ||
+                                (Boolean(season.runner_up_owner_id) &&
+                                  row.owner_id === season.runner_up_owner_id));
                             return (
                               <tr
                                 key={row.id}
                                 className={
                                   champ
                                     ? "bg-amber-50/90"
-                                    : row.is_runner_up
+                                    : runnerUp
                                       ? "bg-zinc-50"
                                       : undefined
                                 }
                               >
-                                <td className="px-3 py-3 font-mono font-bold sm:px-4">
+                                <td className="ff-sticky-rank px-3 py-3 font-mono font-bold sm:px-4">
                                   {row.rank}
                                   {champ ? " 🏆" : ""}
-                                  {row.is_runner_up && !champ ? " 🥈" : ""}
+                                  {runnerUp ? " 🥈" : ""}
                                 </td>
-                                <td className="px-3 py-3 sm:px-4">
+                                <td className="ff-sticky-team px-3 py-3 sm:px-4">
                                   <div className="flex items-center gap-2">
                                     {row.owner && (
                                       <OwnerAvatar
@@ -397,8 +407,8 @@ export default async function HistoryPage() {
             <table className="w-full text-sm">
               <thead className="border-b-2 border-foreground bg-[#f4f2ef] text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 <tr>
-                  <th className="px-3 py-3 sm:px-4">#</th>
-                  <th className="px-3 py-3 sm:px-4">Owner</th>
+                  <th className="ff-sticky-rank px-3 py-3 sm:px-4">#</th>
+                  <th className="ff-sticky-team px-3 py-3 sm:px-4">Owner</th>
                   <th className="px-3 py-3 text-right sm:px-4">W-L-T</th>
                   <th className="px-3 py-3 text-right sm:px-4">Win%</th>
                   <th className="px-3 py-3 text-right sm:px-4">PF</th>
@@ -413,10 +423,10 @@ export default async function HistoryPage() {
                   const c = career.get(owner.id)!;
                   return (
                     <tr key={owner.id}>
-                      <td className="px-3 py-3 font-mono font-bold sm:px-4">
+                      <td className="ff-sticky-rank px-3 py-3 font-mono font-bold sm:px-4">
                         {idx + 1}
                       </td>
-                      <td className="px-3 py-3 sm:px-4">
+                      <td className="ff-sticky-team px-3 py-3 sm:px-4">
                         <Link
                           href={`/players/${owner.id}`}
                           className="flex items-center gap-2 hover:underline"

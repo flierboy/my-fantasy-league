@@ -35,8 +35,8 @@ export default async function BadgesPage() {
             </h1>
             <p className="mt-2 max-w-xl text-sm text-muted-foreground">
               {totalBadges} badges of glory, shame, and weekly chaos. Weekly
-              awards auto-fire after Sleeper sync; season hardware is assigned
-              under Admin → Owners.
+              awards drop after each week’s scores; season hardware is for the
+              long game.
             </p>
           </div>
         </header>
@@ -118,8 +118,8 @@ export default async function BadgesPage() {
           <h2 className="ff-display mt-2.5 text-2xl">On the wall</h2>
           {wearers.length === 0 ? (
             <p className="ff-card mt-4 p-6 text-sm text-muted-foreground">
-              No badges assigned yet. Sync from Sleeper to auto-award weekly
-              ones, or open Admin → Owners for season hardware.
+              No badges awarded yet. Weekly hardware starts once the season is
+              underway.
             </p>
           ) : (
             <ul className="ff-card mt-4 divide-y-2 divide-border overflow-hidden">

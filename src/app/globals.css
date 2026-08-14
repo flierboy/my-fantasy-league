@@ -228,6 +228,38 @@ body {
   }
 }
 
+/* Sticky first columns (rank + team) while swiping wide standings tables */
+.ff-sticky-rank {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #ffffff;
+  box-shadow: 1px 0 0 0 rgba(20, 20, 20, 0.08);
+}
+.ff-sticky-team {
+  position: sticky;
+  left: 2.75rem; /* ~ rank column width */
+  z-index: 2;
+  background: #ffffff;
+  box-shadow: 4px 0 8px -4px rgba(0, 0, 0, 0.12);
+}
+thead .ff-sticky-rank,
+thead .ff-sticky-team {
+  background: #f4f2ef;
+  z-index: 3;
+}
+/* Match champion / runner-up row tints on sticky cells */
+tr.bg-amber-50\/90 .ff-sticky-rank,
+tr.bg-amber-50\/90 .ff-sticky-team,
+tr[class*="bg-amber"] .ff-sticky-rank,
+tr[class*="bg-amber"] .ff-sticky-team {
+  background: #fffbeb;
+}
+tr.bg-zinc-50 .ff-sticky-rank,
+tr.bg-zinc-50 .ff-sticky-team {
+  background: #fafafa;
+}
+
 /* ---------- Display type ---------- */
 .ff-display {
   font-family: var(--font-display), Impact, "Arial Black", sans-serif;

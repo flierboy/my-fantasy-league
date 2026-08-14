@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import type { LeagueSettings } from "@/lib/types";
@@ -27,12 +28,28 @@ const headerCtaClass =
 const headerOutlineCtaClass =
   "inline-flex min-h-11 items-center justify-center rounded-lg border-2 border-foreground bg-transparent px-4 text-sm font-bold uppercase tracking-wide text-foreground hover:bg-muted sm:min-h-9 sm:h-9 sm:px-3 sm:text-xs";
 
+/** Short label for narrow screens so the title doesn’t truncate mid-word. */
+function shortLeagueName(name: string): string {
+  const t = name.trim();
+  if (!t) return "League";
+  if (/upper\s*deck/i.test(t)) return "Upper Decker";
+  if (t.length <= 14) return t;
+  const words = t.split(/\s+/).filter(Boolean);
+  if (words.length >= 2) {
+    const initials = words.map((w) => w[0]).join("").toUpperCase();
+    if (initials.length >= 2 && initials.length <= 5) return initials;
+  }
+  return t.slice(0, 12);
+}
+
 export function SiteHeader({
   league,
   isAuthenticated = false,
   showSignOut = false,
   minimal = false,
 }: SiteHeaderProps) {
+  const shortName = shortLeagueName(league.name);
+
   return (
     <>
       <div className="ff-top-stripe" />
@@ -42,20 +59,29 @@ export function SiteHeader({
           <Link href="/" className="flex min-w-0 items-center gap-2.5">
             <div
               className={cn(
-                "flex h-11 w-11 shrink-0 items-center justify-center",
-                "rounded-lg border-2 border-foreground bg-white text-xl",
+                "relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden",
+                "rounded-lg border-2 border-foreground bg-black",
                 "shadow-[2px_2px_0_0_#141414]"
               )}
               aria-hidden
             >
-              🏈
+              <Image
+                src="/icons/ud-v5-96.png"
+                alt=""
+                width={44}
+                height={44}
+                className="h-full w-full object-cover"
+                priority
+              />
             </div>
             <div className="min-w-0 leading-tight">
-              <p className="ff-display truncate text-base sm:text-lg">
+              {/* Short name on small screens; full name from sm up */}
+              <p className="ff-display text-base sm:hidden">{shortName}</p>
+              <p className="ff-display hidden truncate text-base sm:block sm:text-lg">
                 {league.name}
               </p>
               {!minimal && (
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                <p className="hidden text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground sm:block">
                   {league.tagline}
                 </p>
               )}

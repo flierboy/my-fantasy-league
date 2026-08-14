@@ -224,8 +224,7 @@ export default async function OwnerProfilePage({
           <h2 className="ff-display mt-2.5 text-2xl">Season finishes</h2>
           {finishes.length === 0 ? (
             <p className="ff-card mt-4 p-5 text-sm text-muted-foreground">
-              No past-season standings linked yet. Admins can add them under
-              Admin → Past seasons.
+              No past-season standings yet for this owner.
             </p>
           ) : (
             <ScrollableTable
@@ -262,8 +261,10 @@ export default async function OwnerProfilePage({
                       </td>
                       <td className="px-3 py-3 font-bold sm:px-4">
                         #{f.rank}
-                        {f.is_champion ? " 🏆" : ""}
-                        {f.is_runner_up && !f.is_champion ? " 🥈" : ""}
+                        {f.is_champion === true ? " 🏆" : ""}
+                        {f.is_runner_up === true && f.is_champion !== true
+                          ? " 🥈"
+                          : ""}
                       </td>
                       <td className="px-3 py-3 font-mono tabular-nums sm:px-4">
                         {formatRecord(f.wins, f.losses, f.ties)}

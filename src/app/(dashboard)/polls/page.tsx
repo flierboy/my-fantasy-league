@@ -7,7 +7,7 @@ export const metadata = {
 };
 
 export default async function PollsPage() {
-  const [{ polls, votes, source }, owner] = await Promise.all([
+  const [{ polls, votes }, owner] = await Promise.all([
     getPollsData(),
     getCurrentOwner(),
   ]);
@@ -18,9 +18,8 @@ export default async function PollsPage() {
         <p className="ff-ribbon">Democracy</p>
         <h1 className="ff-display mt-2 text-3xl tracking-tight">Polls</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Vote on league decisions
-          {source === "supabase" ? " · live from Supabase" : ""}. Admins create
-          polls in the Table Editor → <code className="font-mono">polls</code>.
+          Vote on league decisions. Commissioners post new polls when something
+          needs a league vote.
         </p>
       </header>
 
@@ -28,12 +27,8 @@ export default async function PollsPage() {
         <div className="rounded-xl border-2 border-dashed border-border bg-white p-8 text-center">
           <p className="ff-display text-lg">No polls yet</p>
           <p className="mt-2 text-sm text-muted-foreground">
-            Insert a row into <code className="font-mono">polls</code> with a
-            title and options array, e.g.{" "}
-            <code className="font-mono text-xs">
-              {`{"Beer","Pizza","Both"}`}
-            </code>
-            .
+            Nothing to vote on right now — check back when the commissioner
+            drops a question.
           </p>
         </div>
       ) : (

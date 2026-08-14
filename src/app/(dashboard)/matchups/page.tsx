@@ -8,8 +8,7 @@ export const metadata = {
 };
 
 export default async function MatchupsPage() {
-  const { matchups, standings, season, week, source } =
-    await getMatchupsData();
+  const { matchups, standings, season, week } = await getMatchupsData();
 
   // Group matchups by week (latest first)
   const byWeek = new Map<number, typeof matchups>();
@@ -34,9 +33,11 @@ export default async function MatchupsPage() {
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Season {season}
-          {source === "supabase" ? " · live from Supabase" : " · local fallback"}
-          {matchups.length === 0 &&
-            " · no matchups entered yet (admin can add them in Table Editor)"}
+          {matchups.length === 0
+            ? " · season hasn’t kicked off yet"
+            : displayWeek != null
+              ? ` · week ${displayWeek}`
+              : ""}
         </p>
       </header>
 
@@ -45,7 +46,7 @@ export default async function MatchupsPage() {
           {displayWeek != null ? `Week ${displayWeek}` : "This week"}
         </h2>
         {weekMatchups.length === 0 ? (
-          <EmptyCard message="No matchups for this week yet. Add rows to the matchups table in Supabase." />
+          <EmptyCard message="No matchups yet — check back once the season starts." />
         ) : (
           <div className="space-y-3">
             {weekMatchups.map((m) => {
@@ -118,46 +119,53 @@ export default async function MatchupsPage() {
 
       <section>
         <h2 className="ff-display mb-3 text-xl">Standings</h2>
-        <ScrollableTable minWidth="28rem" hint="Swipe for full standings">
-          <table className="w-full text-sm">
-            <thead className="border-b-2 border-foreground bg-[#f4f2ef] text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-              <tr>
-                <th className="px-4 py-3">#</th>
-                <th className="px-4 py-3">Owner</th>
-                <th className="px-4 py-3 text-right">W-L</th>
-                <th className="px-4 py-3 text-right">PF</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {standings.map((row, idx) => {
-                const owner = row.owner;
-                const name = owner?.display_name ?? "Unknown";
-                return (
-                  <tr key={row.id}>
-                    <td className="px-4 py-3 font-mono font-bold">
-                      {row.rank || idx + 1}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <OwnerAvatar name={name} size="sm" />
-                        <span className="ff-display text-sm">{name}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-right font-mono font-bold tabular-nums">
-                      {formatRecord(row.wins, row.losses, row.ties)}
-                    </td>
-                    <td className="px-4 py-3 text-right font-mono text-muted-foreground">
-                      {row.points_for > 0 ? row.points_for.toFixed(1) : "—"}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </ScrollableTable>
+        {standings.length === 0 ? (
+          <EmptyCard message="Standings will show up once the season is underway." />
+        ) : (
+          <ScrollableTable minWidth="28rem" hint="Swipe for full standings">
+            <table className="w-full text-sm">
+              <thead className="border-b-2 border-foreground bg-[#f4f2ef] text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <th className="ff-sticky-rank px-3 py-3 sm:px-4">#</th>
+                  <th className="ff-sticky-team px-3 py-3 sm:px-4">Owner</th>
+                  <th className="px-4 py-3 text-right">W-L</th>
+                  <th className="px-4 py-3 text-right">PF</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {standings.map((row, idx) => {
+                  const owner = row.owner;
+                  const name = owner?.display_name ?? "Unknown";
+                  const rank = row.rank || idx + 1;
+                  // No trophies on live mid-season standings — only past-season champs
+                  return (
+                    <tr key={row.id}>
+                      <td className="ff-sticky-rank px-3 py-3 font-mono font-bold sm:px-4">
+                        {rank}
+                      </td>
+                      <td className="ff-sticky-team px-3 py-3 sm:px-4">
+                        <div className="flex items-center gap-2">
+                          <OwnerAvatar name={name} size="sm" />
+                          <span className="ff-display text-sm">{name}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono font-bold tabular-nums">
+                        {formatRecord(row.wins, row.losses, row.ties)}
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono text-muted-foreground">
+                        {row.points_for > 0 ? row.points_for.toFixed(1) : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </ScrollableTable>
+        )}
         {standings[0]?.id.startsWith("fallback-") && (
           <p className="mt-2 text-xs text-muted-foreground">
-            Showing franchise all-time W-L until season standings rows exist.
+            Showing franchise all-time records until this season’s standings are
+            live.
           </p>
         )}
       </section>

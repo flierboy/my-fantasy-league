@@ -64,8 +64,7 @@ export function PlayersView({
 
       {sorted.length === 0 ? (
         <p className="ff-card p-8 text-center text-sm text-muted-foreground">
-          No owners yet. Admins can add them under Admin → Owners, or sync from
-          Sleeper.
+          Roster loading… check back shortly.
         </p>
       ) : view === "grid" ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">

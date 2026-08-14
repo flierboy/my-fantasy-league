@@ -56,8 +56,8 @@ export default async function DraftsPage({
         {years.length === 0 ? (
           <p className="ff-card p-8 text-center text-sm text-muted-foreground">
             {source === "empty"
-              ? "No drafts published yet. Admins can import under Admin → Drafts."
-              : "Nothing loaded."}
+              ? "No draft boards yet — check back after draft day."
+              : "Draft history isn’t available right now."}
           </p>
         ) : (
           <>

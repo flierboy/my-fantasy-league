@@ -8,7 +8,7 @@ export const metadata = {
 };
 
 export default async function DuesPage() {
-  const { league, payments, season, source } = await getDuesData();
+  const { league, payments, season } = await getDuesData();
 
   const totalDue = payments.reduce((s, p) => s + p.amount_due, 0);
   const collected = payments.reduce((s, p) => s + p.amount_paid, 0);
@@ -35,7 +35,6 @@ export default async function DuesPage() {
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Season {season} · {formatMoney(league.dues_amount)} per team
-          {source === "supabase" ? " · live from Supabase" : ""}
         </p>
       </header>
 
@@ -99,9 +98,7 @@ export default async function DuesPage() {
       </ScrollableTable>
 
       <p className="text-xs text-muted-foreground">
-        Update payments in Supabase Table Editor →{" "}
-        <code className="font-mono">due_payments</code>. Owners without a row
-        show as unpaid at the default dues amount.
+        Commissioners track who has paid. Reach out if your balance looks off.
       </p>
     </div>
   );
