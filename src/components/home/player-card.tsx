@@ -1,40 +1,31 @@
 import Link from "next/link";
 import type { Owner } from "@/lib/types";
-import type { CareerFranchiseStats } from "@/lib/data/seasons";
+import type { OwnerCareer } from "@/lib/data/seasons";
 import { formatPoints, formatRecord, formatWinPct } from "@/lib/utils";
 import { OwnerAvatar } from "./owner-avatar";
 import { OwnerBadge } from "./owner-badge";
 import { MoneyChip } from "./money-chip";
 import { cn } from "@/lib/utils";
 
+type OwnerMaybeCareer = Owner & { career?: OwnerCareer };
+
 interface PlayerCardProps {
-  owner: Owner;
-  /** denser card for homepage strip */
+  owner: OwnerMaybeCareer;
   compact?: boolean;
   className?: string;
-  /** Career totals from past seasons; falls back to owner W-L */
-  career?: CareerFranchiseStats;
 }
 
 /**
- * Fake Football–style owner card: avatar, name, team, role, cash, badges.
+ * Owner card: franchise W-L from owners table; PF/PA from o.career.
  */
 export function PlayerCard({
   owner,
   compact = false,
   className,
-  career,
 }: PlayerCardProps) {
   const role = owner.role;
   const href = `/players/${owner.id}`;
-  const wins = career?.wins ?? owner.wins;
-  const losses = career?.losses ?? owner.losses;
-  const ties = career?.ties ?? owner.ties;
-  const showPf =
-    career &&
-    (!career.from_owner_fallback ||
-      career.points_for > 0 ||
-      career.points_against > 0);
+  const career = owner.career;
 
   return (
     <article
@@ -81,15 +72,14 @@ export function PlayerCard({
       )}
 
       <p className="mt-2 font-mono text-sm font-bold tabular-nums">
-        {formatRecord(wins, losses, ties)}
+        {formatRecord(owner.wins, owner.losses, owner.ties)}
       </p>
       <p className="font-mono text-[11px] font-semibold tabular-nums text-muted-foreground">
-        {formatWinPct(wins, losses, ties)}
+        {formatWinPct(owner.wins, owner.losses, owner.ties)}
       </p>
-      {showPf && career && (
+      {career && career.seasonsCounted > 0 && (
         <p className="mt-1 font-mono text-[10px] tabular-nums text-muted-foreground">
-          PF {formatPoints(career.points_for)} · PA{" "}
-          {formatPoints(career.points_against)}
+          PF {formatPoints(career.pf)} · PA {formatPoints(career.pa)}
         </p>
       )}
       <p className="mt-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
@@ -111,23 +101,9 @@ export function PlayerCard({
   );
 }
 
-/** Horizontal roster row for list view */
-export function PlayerListRow({
-  owner,
-  career,
-}: {
-  owner: Owner;
-  career?: CareerFranchiseStats;
-}) {
+export function PlayerListRow({ owner }: { owner: OwnerMaybeCareer }) {
   const href = `/players/${owner.id}`;
-  const wins = career?.wins ?? owner.wins;
-  const losses = career?.losses ?? owner.losses;
-  const ties = career?.ties ?? owner.ties;
-  const showPf =
-    career &&
-    (!career.from_owner_fallback ||
-      career.points_for > 0 ||
-      career.points_against > 0);
+  const career = owner.career;
 
   return (
     <li className="flex items-center gap-3 px-3 py-3 sm:gap-4 sm:px-5 sm:py-3.5">
@@ -156,25 +132,21 @@ export function PlayerListRow({
           ))}
         </div>
         <p className="mt-0.5 truncate text-xs font-semibold text-muted-foreground">
-          {owner.team_name || "—"}
+          {owner.team_name || "Team"}
           {owner.favorite_nfl_team ? ` · ${owner.favorite_nfl_team}` : ""}
           {" · "}
           <span className="font-mono tabular-nums">
-            {formatRecord(wins, losses, ties)}
+            {formatRecord(owner.wins, owner.losses, owner.ties)}
           </span>
-          {" · "}
-          <span className="font-mono tabular-nums">
-            {formatWinPct(wins, losses, ties)}
-          </span>
-          {showPf && career && (
+          {career && career.seasonsCounted > 0 && (
             <>
               {" · "}
               <span className="font-mono tabular-nums">
-                PF {formatPoints(career.points_for)}
+                PF {formatPoints(career.pf)}
               </span>
               {" · "}
               <span className="font-mono tabular-nums">
-                PA {formatPoints(career.points_against)}
+                PA {formatPoints(career.pa)}
               </span>
             </>
           )}

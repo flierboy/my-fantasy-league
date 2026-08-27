@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PublicPageShell } from "@/components/layout/public-page-shell";
-import { getLeagueSettings, getOwners } from "@/lib/data/league";
+import { getOwners } from "@/lib/data/league";
 import {
   buildCareerFranchiseStats,
-  getCurrentSeasonStandingsByOwner,
   getPastSeasons,
   ownerSeasonFinishes,
 } from "@/lib/data/seasons";
@@ -41,32 +40,23 @@ export default async function OwnerProfilePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [owners, { seasons }, { punishments }, league, { awards }] =
+  const [owners, { seasons }, { punishments }, { awards }] =
     await Promise.all([
       getOwners(),
       getPastSeasons({ withStandings: true }),
       getPunishments({ ownerId: id }),
-      getLeagueSettings(),
       getBadgeAwards({ ownerId: id }),
     ]);
 
-  const owner = owners.find((o) => o.id === id);
-  if (!owner) notFound();
+  const raw = owners.find((o) => o.id === id);
+  if (!raw) notFound();
 
-  const currentByOwner = await getCurrentSeasonStandingsByOwner(
-    league.season_year
-  );
-  const career = buildCareerFranchiseStats(owners, seasons, {
-    currentByOwner,
-    currentSeasonYear: league.season_year,
-  });
-  const c = career.get(owner.id)!;
+  const owner = buildCareerFranchiseStats([raw], seasons)[0];
+  const c = owner.career;
 
   const finishes = ownerSeasonFinishes(seasons, owner.id);
   const championships = finishes.filter((f) => f.is_champion);
   const runnerUps = finishes.filter((f) => f.is_runner_up);
-
-  const showPfPa = !c.from_owner_fallback || c.points_for > 0 || c.points_against > 0;
 
   return (
     <PublicPageShell>
@@ -80,71 +70,68 @@ export default async function OwnerProfilePage({
           </Link>
         </p>
 
-        <header className="ff-welcome">
-          <div className="ff-top-stripe" />
-          <div className="flex flex-col items-center gap-5 px-5 py-8 text-center sm:flex-row sm:items-start sm:px-7 sm:text-left">
-            <OwnerAvatar
-              name={owner.display_name}
-              src={owner.avatar_url}
-              size="xl"
-            />
-            <div className="min-w-0 flex-1">
-              <p className="ff-ribbon text-[10px] !px-3 !py-1">Owner profile</p>
-              <h1 className="ff-display mt-3 text-3xl tracking-tight sm:text-4xl">
-                {owner.display_name}
-              </h1>
-              {owner.team_name && (
-                <p className="mt-1 text-sm font-semibold text-muted-foreground">
-                  {owner.team_name}
-                </p>
-              )}
-              {owner.role && (
-                <span className="mt-2 inline-flex rounded-full border-2 border-foreground bg-[var(--banner)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
-                  {owner.role}
+        <header className="flex flex-col items-center gap-5 text-center sm:flex-row sm:items-start sm:text-left">
+          <OwnerAvatar
+            name={owner.display_name}
+            src={owner.avatar_url}
+            size="xl"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="ff-ribbon text-[10px] !px-3 !py-1">Owner profile</p>
+            <h1 className="ff-display mt-2.5 text-3xl tracking-tight sm:text-4xl">
+              {owner.display_name}
+            </h1>
+            {owner.team_name && (
+              <p className="mt-1 text-sm font-semibold text-muted-foreground">
+                {owner.team_name}
+              </p>
+            )}
+            {owner.role && (
+              <span className="mt-2 inline-flex rounded-full border-2 border-foreground bg-[var(--banner)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+                {owner.role}
+              </span>
+            )}
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
+              <p className="font-mono text-lg font-bold tabular-nums">
+                {formatRecord(owner.wins, owner.losses, owner.ties)}
+              </p>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Franchise
+              </span>
+              <MoneyChip amount={owner.prize_money} />
+              {owner.favorite_nfl_team && (
+                <span className="rounded-full border-2 border-border bg-white px-2.5 py-1 text-xs font-bold">
+                  NFL · {owner.favorite_nfl_team}
                 </span>
-              )}
-              <div className="mt-4 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
-                <p className="font-mono text-lg font-bold tabular-nums">
-                  {formatRecord(c.wins, c.losses, c.ties)}
-                </p>
-                <span className="font-mono text-sm font-bold tabular-nums text-muted-foreground">
-                  {formatWinPct(c.wins, c.losses, c.ties)}
-                </span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Career
-                </span>
-                <MoneyChip amount={owner.prize_money} />
-                {owner.favorite_nfl_team && (
-                  <span className="rounded-full border-2 border-border bg-white px-2.5 py-1 text-xs font-bold">
-                    NFL · {owner.favorite_nfl_team}
-                  </span>
-                )}
-              </div>
-              {showPfPa && (
-                <div className="mt-3 flex flex-wrap items-center justify-center gap-4 sm:justify-start">
-                  <StatPill label="PF" value={formatPoints(c.points_for)} />
-                  <StatPill label="PA" value={formatPoints(c.points_against)} />
-                  {c.seasons_played > 0 && (
-                    <StatPill
-                      label="Seasons"
-                      value={String(c.seasons_played)}
-                    />
-                  )}
-                </div>
-              )}
-              {owner.badges.length > 0 && (
-                <div className="mt-4 flex flex-wrap justify-center gap-1.5 sm:justify-start">
-                  {owner.badges.map((b) => (
-                    <OwnerBadge
-                      key={b}
-                      badgeKey={b}
-                      showLabel
-                      weekLabel={latestWeekLabel(awards, owner.id, b)}
-                    />
-                  ))}
-                </div>
               )}
             </div>
+            {c.seasonsCounted > 0 && (
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-4 sm:justify-start">
+                <StatPill
+                  label="Career"
+                  value={formatRecord(c.w, c.l, c.t)}
+                />
+                <StatPill
+                  label="Win%"
+                  value={formatWinPct(c.w, c.l, c.t)}
+                />
+                <StatPill label="PF" value={formatPoints(c.pf)} />
+                <StatPill label="PA" value={formatPoints(c.pa)} />
+                <StatPill label="Seasons" value={String(c.seasonsCounted)} />
+              </div>
+            )}
+            {owner.badges.length > 0 && (
+              <div className="mt-4 flex flex-wrap justify-center gap-1.5 sm:justify-start">
+                {owner.badges.map((b) => (
+                  <OwnerBadge
+                    key={b}
+                    badgeKey={b}
+                    showLabel
+                    weekLabel={latestWeekLabel(awards, owner.id, b)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </header>
 

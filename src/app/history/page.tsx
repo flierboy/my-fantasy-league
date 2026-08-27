@@ -1,12 +1,8 @@
 import Link from "next/link";
 import { PublicPageShell } from "@/components/layout/public-page-shell";
-import { getLeagueSettings, getOwners } from "@/lib/data/league";
+import { getOwners } from "@/lib/data/league";
 import { ALL_TIME_BLURB, getHistoryEntries, groupHistory } from "@/lib/data/history";
-import {
-  buildCareerFranchiseStats,
-  getCurrentSeasonStandingsByOwner,
-  getPastSeasons,
-} from "@/lib/data/seasons";
+import { buildCareerFranchiseStats, getPastSeasons } from "@/lib/data/seasons";
 import { formatPoints, formatRecord, formatWinPct } from "@/lib/utils";
 import { OwnerAvatar } from "@/components/home/owner-avatar";
 import { ScrollableTable } from "@/components/ui/scrollable-table";
@@ -18,57 +14,48 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function HistoryPage() {
-  const [{ entries, source }, owners, { seasons }, league] = await Promise.all([
+  const [{ entries, source }, owners, { seasons }] = await Promise.all([
     getHistoryEntries(),
     getOwners(),
     getPastSeasons({ withStandings: true }),
-    getLeagueSettings(),
   ]);
 
   const { champions, milestones, records, notes } = groupHistory(entries);
 
-  const currentByOwner = await getCurrentSeasonStandingsByOwner(
-    league.season_year
-  );
-  const career = buildCareerFranchiseStats(owners, seasons, {
-    currentByOwner,
-    currentSeasonYear: league.season_year,
-  });
-
-  const sorted = [...owners].sort((a, b) => {
-    const ca = career.get(a.id)!;
-    const cb = career.get(b.id)!;
-    if (cb.wins !== ca.wins) return cb.wins - ca.wins;
-    if (ca.losses !== cb.losses) return ca.losses - cb.losses;
-    if (cb.points_for !== ca.points_for) return cb.points_for - ca.points_for;
+  const withCareer = buildCareerFranchiseStats(owners, seasons);
+  const sorted = [...withCareer].sort((a, b) => {
+    if (b.career.w !== a.career.w) return b.career.w - a.career.w;
+    if (a.career.l !== b.career.l) return a.career.l - b.career.l;
+    const bpf = b.career.pf ?? 0;
+    const apf = a.career.pf ?? 0;
+    if (bpf !== apf) return bpf - apf;
     return a.sort_order - b.sort_order;
   });
 
   return (
     <PublicPageShell>
       <div className="space-y-10">
-        <header className="ff-welcome">
-          <div className="ff-top-stripe" />
-          <div className="px-5 py-6 sm:px-7">
-            <p className="ff-ribbon text-[10px] !px-3 !py-1">Legacy</p>
-            <h1 className="ff-display mt-3 text-3xl tracking-tight sm:text-4xl">
-              League history
-            </h1>
-            <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-              Champions, scars, and the long road to the hardware. {ALL_TIME_BLURB}
+        <header>
+          <p className="ff-ribbon text-[10px] !px-3 !py-1">Legacy</p>
+          <h1 className="ff-display mt-2.5 text-3xl tracking-tight sm:text-4xl">
+            League history
+          </h1>
+          <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+            Champions, scars, and the long road to the hardware. {ALL_TIME_BLURB}
+          </p>
+          {source === "placeholder" && (
+            <p className="mt-2 text-xs font-semibold text-muted-foreground">
+              History will fill in as seasons are recorded.
             </p>
-            {source === "placeholder" && (
-              <p className="mt-3 text-xs font-semibold text-muted-foreground">
-                History will fill in as seasons are recorded.
+          )}
+          {source === "supabase" &&
+            entries.length === 0 &&
+            seasons.length === 0 && (
+              <p className="mt-2 text-xs font-semibold text-muted-foreground">
+                No history entries yet — check back after a few seasons of glory
+                (and shame).
               </p>
             )}
-            {source === "supabase" && entries.length === 0 && seasons.length === 0 && (
-              <p className="mt-3 text-xs font-semibold text-muted-foreground">
-                No history entries yet — check back after a few seasons of
-                glory (and shame).
-              </p>
-            )}
-          </div>
         </header>
 
         {/* Past season standings tables */}
@@ -391,13 +378,13 @@ export default async function HistoryPage() {
           </section>
         )}
 
-        {/* Franchise table — career from past seasons (+ current if available) */}
+        {/* Franchise table — career from past_season_standings */}
         <section>
           <p className="ff-ribbon text-[10px] !px-3 !py-1">Franchise</p>
           <h2 className="ff-display mt-2.5 text-2xl">Franchise standings</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            All-time from past season standings (PF / PA / Win%). Falls back to
-            owner W-L when no past rows exist. Sorted by wins, then PF.
+            Career totals from past season standings (PF / PA summed only when
+            present). Sorted by wins, then PF.
           </p>
           <ScrollableTable
             className="mt-4"
@@ -420,7 +407,7 @@ export default async function HistoryPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {sorted.map((owner, idx) => {
-                  const c = career.get(owner.id)!;
+                  const c = owner.career;
                   return (
                     <tr key={owner.id}>
                       <td className="ff-sticky-rank px-3 py-3 font-mono font-bold sm:px-4">
@@ -442,20 +429,16 @@ export default async function HistoryPage() {
                         </Link>
                       </td>
                       <td className="px-3 py-3 text-right font-mono font-bold tabular-nums sm:px-4">
-                        {formatRecord(c.wins, c.losses, c.ties)}
+                        {formatRecord(c.w, c.l, c.t)}
                       </td>
                       <td className="px-3 py-3 text-right font-mono tabular-nums sm:px-4">
-                        {formatWinPct(c.wins, c.losses, c.ties)}
+                        {formatWinPct(c.w, c.l, c.t)}
                       </td>
                       <td className="px-3 py-3 text-right font-mono tabular-nums sm:px-4">
-                        {c.from_owner_fallback && c.points_for === 0
-                          ? "—"
-                          : formatPoints(c.points_for)}
+                        {formatPoints(c.pf)}
                       </td>
                       <td className="px-3 py-3 text-right font-mono tabular-nums text-muted-foreground sm:px-4">
-                        {c.from_owner_fallback && c.points_against === 0
-                          ? "—"
-                          : formatPoints(c.points_against)}
+                        {formatPoints(c.pa)}
                       </td>
                       <td className="px-3 py-3 text-right font-mono text-muted-foreground sm:px-4">
                         ${owner.prize_money.toLocaleString()}

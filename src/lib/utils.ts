@@ -35,7 +35,13 @@ export function computeWinPct(
   return (wins + 0.5 * ties) / games;
 }
 
-/** Display win % as e.g. "68.8%" or "—" if no games. */
+/** Points for/against display (one decimal). Never returns "—". */
+export function formatPoints(n: number | null | undefined, digits = 1): string {
+  if (n == null || !Number.isFinite(Number(n))) return "0";
+  return Number(n).toFixed(digits);
+}
+
+/** Display win % as e.g. "68.8%". Never "—" (0.0% if no games). */
 export function formatWinPct(
   wins: number,
   losses: number,
@@ -43,14 +49,6 @@ export function formatWinPct(
   digits = 1
 ): string {
   const games = wins + losses + ties;
-  if (games <= 0) return "—";
+  if (games <= 0) return `${(0).toFixed(digits)}%`;
   return `${(computeWinPct(wins, losses, ties) * 100).toFixed(digits)}%`;
-}
-
-/** Points for/against display (one decimal when needed). */
-export function formatPoints(n: number, digits = 1): string {
-  if (!Number.isFinite(n)) return "—";
-  const fixed = n.toFixed(digits);
-  // Drop trailing .0 for whole numbers when digits=1 looks cleaner as-is with tabular
-  return fixed;
 }

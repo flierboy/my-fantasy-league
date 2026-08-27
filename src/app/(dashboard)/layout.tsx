@@ -20,22 +20,10 @@ export default async function DashboardLayout({
   return (
     <div className="flex flex-1 flex-col">
       <SiteHeader league={league} isAuthenticated showSignOut />
-      <DashboardNav showAdmin={isAdmin} />
+      <DashboardNav showAdmin={Boolean(isAdmin)} />
 
       <main className="flex-1">
         <div className="ff-page py-8 sm:py-10">
-          {owner && (
-            <div className="mb-5 flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-              <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-              Signed in as{" "}
-              <span className="text-foreground">{owner.display_name}</span>
-              {isAdmin && (
-                <span className="rounded-full border-2 border-foreground bg-[var(--accent-gold)] px-2 py-0.5 text-[10px] text-foreground">
-                  Admin
-                </span>
-              )}
-            </div>
-          )}
           {!owner && (
             <div className="ff-card mb-5 border-amber-700/50 bg-amber-50 px-4 py-3 text-sm text-amber-950">
               Your account is not linked to an owner yet. Ask the commissioner to

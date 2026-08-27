@@ -1,6 +1,6 @@
 /**
  * Past seasons + standings (manual admin entry).
- * Career franchise stats are summed from past_season_standings (+ optional current).
+ * Career franchise stats: reduce over past_season_standings by stable ownerId.
  */
 
 import { createClient } from "@/lib/supabase/server";
@@ -9,20 +9,23 @@ import { mapOwner } from "@/lib/data/mappers";
 import { computeWinPct } from "@/lib/utils";
 import type { Owner, PastSeason, PastSeasonStanding } from "@/lib/types";
 
-/** Aggregated career franchise record for one owner. */
-export type CareerFranchiseStats = {
-  owner_id: string;
-  wins: number;
-  losses: number;
-  ties: number;
-  points_for: number;
-  points_against: number;
-  seasons_played: number;
-  /** 0–1; 0 when no games */
-  win_pct: number;
-  /** True when W-L/PF/PA came only from owners.* fallback (no past rows). */
-  from_owner_fallback: boolean;
+/** Career totals from past_season_standings only (stable ownerId). */
+export type OwnerCareer = {
+  w: number;
+  l: number;
+  t: number;
+  /** null until at least one season has a real PF value */
+  pf: number | null;
+  /** null until at least one season has a real PA value */
+  pa: number | null;
+  /** 0–1, or null if no games */
+  winPct: number | null;
+  seasonsCounted: number;
+  pfSeasons: number;
+  paSeasons: number;
 };
+
+export type OwnerWithCareer = Owner & { career: OwnerCareer };
 
 export function mapPastSeasonStanding(
   row: Record<string, unknown>,
@@ -216,126 +219,136 @@ export function ownerSeasonFinishes(
   return out.sort((a, b) => b.season_year - a.season_year);
 }
 
+type CareerAcc = {
+  wins: number;
+  losses: number;
+  ties: number;
+  pf: number | null;
+  pa: number | null;
+  seasonsCounted: number;
+  pfSeasons: number;
+  paSeasons: number;
+};
+
+function emptyAcc(): CareerAcc {
+  return {
+    wins: 0,
+    losses: 0,
+    ties: 0,
+    pf: null,
+    pa: null,
+    seasonsCounted: 0,
+    pfSeasons: 0,
+    paSeasons: 0,
+  };
+}
+
+function isPresentNumber(v: unknown): v is number {
+  return v != null && v !== "" && !Number.isNaN(Number(v));
+}
+
+/** Normalize a season bag that may use `.standings` or `.rows`. */
+function seasonRows(
+  season: PastSeason | { rows?: Record<string, unknown>[]; standings?: PastSeasonStanding[] }
+): Record<string, unknown>[] {
+  const any = season as {
+    rows?: Record<string, unknown>[];
+    standings?: PastSeasonStanding[];
+  };
+  if (Array.isArray(any.rows) && any.rows.length) {
+    return any.rows;
+  }
+  return (any.standings ?? []).map((r) => ({
+    ownerId: r.owner_id,
+    owner_id: r.owner_id,
+    id: r.owner_id,
+    wins: r.wins,
+    losses: r.losses,
+    ties: r.ties,
+    pf: r.points_for,
+    pa: r.points_against,
+    points_for: r.points_for,
+    points_against: r.points_against,
+  }));
+}
+
 /**
- * Sum career W-L / PF / PA from past_season_standings.
- * Owners with no past rows fall back to owners.wins/losses/ties (PF/PA 0).
- * Optional `currentByOwner` adds live season-to-date when that year isn't already in past_seasons.
+ * Career PF/PA/W-L from a reduce over past_season_standings.
+ * Returns owners with `.career` attached (stable ownerId only).
+ * Skips unmatched rows; skips missing pf/pa (does not treat as 0).
  */
 export function buildCareerFranchiseStats(
   owners: Owner[],
-  seasons: PastSeason[],
-  options?: {
-    /** Live season-to-date by owner_id (week=null standings or similar) */
-    currentByOwner?: Map<
-      string,
-      {
-        wins: number;
-        losses: number;
-        ties: number;
-        points_for: number;
-        points_against: number;
+  pastSeasonStandings: PastSeason[] | { rows?: Record<string, unknown>[] }[],
+  _options?: unknown
+): OwnerWithCareer[] {
+  const byId = new Map<string, CareerAcc>(
+    owners.map((o) => [o.id, emptyAcc()])
+  );
+
+  for (const season of pastSeasonStandings || []) {
+    for (const row of seasonRows(season as PastSeason)) {
+      const ownerId = String(
+        row.ownerId ?? row.owner_id ?? row.id ?? ""
+      );
+      if (!ownerId) continue;
+      const acc = byId.get(ownerId);
+      if (!acc) continue;
+
+      acc.seasonsCounted += 1;
+      if (row.wins != null) acc.wins += Number(row.wins) || 0;
+      if (row.losses != null) acc.losses += Number(row.losses) || 0;
+      if (row.ties != null) acc.ties += Number(row.ties) || 0;
+
+      const pfRaw = row.pf ?? row.points_for;
+      if (isPresentNumber(pfRaw)) {
+        acc.pf = (acc.pf ?? 0) + Number(pfRaw);
+        acc.pfSeasons += 1;
       }
-    >;
-    /** Season year of current data — skipped if already present as a past season */
-    currentSeasonYear?: number;
-  }
-): Map<string, CareerFranchiseStats> {
-  const map = new Map<string, CareerFranchiseStats>();
 
-  for (const o of owners) {
-    map.set(o.id, {
-      owner_id: o.id,
-      wins: 0,
-      losses: 0,
-      ties: 0,
-      points_for: 0,
-      points_against: 0,
-      seasons_played: 0,
-      win_pct: 0,
-      from_owner_fallback: true,
-    });
-  }
-
-  const pastYears = new Set(seasons.map((s) => s.season_year));
-
-  for (const season of seasons) {
-    for (const row of season.standings ?? []) {
-      if (!row.owner_id) continue;
-      let cur = map.get(row.owner_id);
-      if (!cur) {
-        cur = {
-          owner_id: row.owner_id,
-          wins: 0,
-          losses: 0,
-          ties: 0,
-          points_for: 0,
-          points_against: 0,
-          seasons_played: 0,
-          win_pct: 0,
-          from_owner_fallback: false,
-        };
-        map.set(row.owner_id, cur);
+      const paRaw = row.pa ?? row.points_against;
+      if (isPresentNumber(paRaw)) {
+        acc.pa = (acc.pa ?? 0) + Number(paRaw);
+        acc.paSeasons += 1;
       }
-      cur.wins += row.wins;
-      cur.losses += row.losses;
-      cur.ties += row.ties;
-      cur.points_for += row.points_for;
-      cur.points_against += row.points_against;
-      cur.seasons_played += 1;
-      cur.from_owner_fallback = false;
     }
   }
 
-  // Fold in current season if not already archived as a past season
-  const cy = options?.currentSeasonYear;
-  const current = options?.currentByOwner;
-  if (
-    current &&
-    cy != null &&
-    !pastYears.has(cy)
-  ) {
-    for (const [ownerId, row] of current) {
-      let cur = map.get(ownerId);
-      if (!cur) {
-        cur = {
-          owner_id: ownerId,
-          wins: 0,
-          losses: 0,
-          ties: 0,
-          points_for: 0,
-          points_against: 0,
-          seasons_played: 0,
-          win_pct: 0,
-          from_owner_fallback: false,
-        };
-        map.set(ownerId, cur);
-      }
-      cur.wins += row.wins;
-      cur.losses += row.losses;
-      cur.ties += row.ties;
-      cur.points_for += row.points_for;
-      cur.points_against += row.points_against;
-      cur.seasons_played += 1;
-      cur.from_owner_fallback = false;
-    }
-  }
+  return owners.map((o) => {
+    const acc = byId.get(o.id) ?? emptyAcc();
+    const games = acc.wins + acc.losses + acc.ties;
+    return {
+      ...o,
+      career: {
+        w: acc.wins,
+        l: acc.losses,
+        t: acc.ties,
+        pf: acc.pf == null ? null : Math.round(acc.pf * 10) / 10,
+        pa: acc.pa == null ? null : Math.round(acc.pa * 10) / 10,
+        winPct: games ? (acc.wins + acc.ties * 0.5) / games : null,
+        seasonsCounted: acc.seasonsCounted,
+        pfSeasons: acc.pfSeasons,
+        paSeasons: acc.paSeasons,
+      },
+    };
+  });
+}
 
-  // Fallback: owners with zero past/current rows use manual owners W-L
-  for (const o of owners) {
-    const cur = map.get(o.id)!;
-    const games = cur.wins + cur.losses + cur.ties;
-    if (games === 0 && cur.seasons_played === 0) {
-      cur.wins = o.wins;
-      cur.losses = o.losses;
-      cur.ties = o.ties;
-      cur.points_for = 0;
-      cur.points_against = 0;
-      cur.from_owner_fallback = true;
-    }
-    cur.win_pct = computeWinPct(cur.wins, cur.losses, cur.ties);
-  }
+/** Alias — same as buildCareerFranchiseStats. */
+export function ownersWithCareer(
+  owners: Owner[],
+  pastSeasons: PastSeason[]
+): OwnerWithCareer[] {
+  return buildCareerFranchiseStats(owners, pastSeasons);
+}
 
-  return map;
+/** Map keyed by owner id (for call sites that still expect a Map). */
+export function careerStatsByOwnerId(
+  owners: Owner[],
+  pastSeasons: PastSeason[]
+): Map<string, OwnerCareer> {
+  const list = buildCareerFranchiseStats(owners, pastSeasons);
+  return new Map(list.map((o) => [o.id, o.career]));
 }
 
 /** Load season-to-date standings (week null) for optional career merge. */

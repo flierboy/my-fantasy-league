@@ -124,32 +124,29 @@ export default async function AdminHomePage() {
 
   return (
     <div className="space-y-8">
-      <header className="ff-welcome">
-        <div className="ff-top-stripe" />
-        <div className="px-5 py-6 sm:px-7">
-          <p className="ff-ribbon text-[10px] !px-3 !py-1">Commissioner tools</p>
-          <h1 className="ff-display mt-3 text-3xl tracking-tight">Admin</h1>
-          <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            Manage {league.name} without leaving the site
-            {owner ? ` · signed in as ${owner.display_name}` : ""}.
+      <header>
+        <p className="ff-ribbon text-[10px] !px-3 !py-1">Commissioner tools</p>
+        <h1 className="ff-display mt-2.5 text-3xl tracking-tight">Admin</h1>
+        <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+          Manage {league.name}
+          {owner ? ` · ${owner.display_name}` : ""}.
+        </p>
+        {league.last_sleeper_sync_at && (
+          <p className="mt-1 text-xs font-semibold text-muted-foreground">
+            Last Sleeper sync ·{" "}
+            {new Date(league.last_sleeper_sync_at).toLocaleString(undefined, {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            })}
+            {" · "}
+            <Link href="/admin/sleeper" className="underline">
+              Sync now →
+            </Link>
           </p>
-          {league.last_sleeper_sync_at && (
-            <p className="mt-2 text-xs font-semibold text-muted-foreground">
-              Last successful Sleeper sync ·{" "}
-              {new Date(league.last_sleeper_sync_at).toLocaleString(undefined, {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-              })}
-              {" · "}
-              <Link href="/admin/sleeper" className="underline">
-                Sync now →
-              </Link>
-            </p>
-          )}
-        </div>
+        )}
       </header>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
