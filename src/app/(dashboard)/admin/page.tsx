@@ -63,6 +63,12 @@ const SECTIONS = [
     blurb: "Wall of Shame entries",
   },
   {
+    href: "/admin/dead",
+    icon: "🪦",
+    title: "The Dead",
+    blurb: "Wall of the Dead epitaphs",
+  },
+  {
     href: "/admin/import-espn",
     icon: "📥",
     title: "ESPN import",

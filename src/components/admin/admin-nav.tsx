@@ -14,6 +14,7 @@ const LINKS = [
   { href: "/admin/seasons", label: "Past seasons" },
   { href: "/admin/drafts", label: "Drafts" },
   { href: "/admin/punishments", label: "Punishments" },
+  { href: "/admin/dead", label: "The Dead" },
   { href: "/admin/import-espn", label: "ESPN import" },
   { href: "/admin/sleeper", label: "Sleeper" },
   { href: "/admin/matchups", label: "Matchups" },

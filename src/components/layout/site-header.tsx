@@ -26,6 +26,7 @@ const NAV_LINKS: NavLink[] = [
   { href: "/history", label: "History" },
   { href: "/drafts", label: "Drafts" },
   { href: "/punishments", label: "Punishments" },
+  { href: "/dead", label: "The Dead" },
   { href: "/badges", label: "Badges" },
   { href: "/constitution", label: "Constitution" },
   { href: "/admin", label: "Admin", adminOnly: true },

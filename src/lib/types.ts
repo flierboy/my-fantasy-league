@@ -306,6 +306,17 @@ export interface Punishment {
   owner?: Owner | null;
 }
 
+/** Wall of the Dead — owners who left the league */
+export interface DepartedOwner {
+  id: string;
+  display_name: string;
+  departed_year: number;
+  epitaph: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 /** Draft history */
 export type DraftSource = "espn" | "yahoo" | "sleeper" | "manual";
 
