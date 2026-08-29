@@ -16,6 +16,7 @@ export default async function DashboardLayout({
     getSessionContext(),
   ]);
 
+  // Single chrome only — SiteHeader owns all signed-in navigation (no DashboardNav).
   return (
     <div className="flex flex-1 flex-col">
       <SiteHeader
