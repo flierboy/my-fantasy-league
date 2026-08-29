@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
-import { DashboardNav } from "@/components/dashboard/dashboard-nav";
 import { getLeagueSettings } from "@/lib/data/league";
 import { getSessionContext } from "@/lib/auth/session";
 
@@ -19,8 +18,13 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex flex-1 flex-col">
-      <SiteHeader league={league} isAuthenticated showSignOut />
-      <DashboardNav showAdmin={Boolean(isAdmin)} />
+      <SiteHeader
+        league={league}
+        isAuthenticated
+        isAdmin={Boolean(isAdmin)}
+        ownerName={owner?.display_name ?? null}
+        ownerAvatarUrl={owner?.avatar_url ?? null}
+      />
 
       <main className="flex-1">
         <div className="ff-page py-8 sm:py-10">

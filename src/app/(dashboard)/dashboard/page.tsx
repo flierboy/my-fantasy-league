@@ -119,30 +119,19 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <header>
-        <p className="ff-ribbon text-[10px] !px-3 !py-1">Private</p>
-        <h1 className="ff-display mt-2.5 text-3xl tracking-tight sm:text-4xl">
-          League hub
-        </h1>
-        <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
-          {owner ? owner.display_name : "Member"} · {league.name} ·{" "}
-          {league.season_year}
-          {isAdmin ? " · Admin" : ""}
-        </p>
-        {lastSync && !Number.isNaN(lastSync.getTime()) && (
-          <p className="mt-1 text-[11px] font-semibold text-muted-foreground">
-            Last Sleeper sync ·{" "}
-            {lastSync.toLocaleString(undefined, {
-              month: "short",
-              day: "numeric",
-              hour: "numeric",
-              minute: "2-digit",
-            })}
-          </p>
-        )}
-      </header>
-
       <DraftCountdown draftAt={league.draft_at || DEFAULT_DRAFT_AT} compact />
+
+      {lastSync && !Number.isNaN(lastSync.getTime()) && (
+        <p className="text-[11px] font-semibold text-muted-foreground">
+          Last Sleeper sync ·{" "}
+          {lastSync.toLocaleString(undefined, {
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+          })}
+        </p>
+      )}
 
       {/* This week’s matchup */}
       {owner && (
