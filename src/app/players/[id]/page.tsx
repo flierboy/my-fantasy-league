@@ -7,10 +7,15 @@ import {
   getPastSeasons,
   ownerSeasonFinishes,
 } from "@/lib/data/seasons";
+import {
+  getMatchupsData,
+  getOwnerLatestLineup,
+} from "@/lib/data/dashboard";
 import { getPunishments } from "@/lib/data/punishments";
 import { OwnerAvatar } from "@/components/home/owner-avatar";
 import { OwnerBadge } from "@/components/home/owner-badge";
 import { MoneyChip } from "@/components/home/money-chip";
+import { OwnerRosterLineup } from "@/components/matchups/matchup-lineups";
 import { formatPoints, formatRecord, formatWinPct } from "@/lib/utils";
 import { ScrollableTable } from "@/components/ui/scrollable-table";
 import {
@@ -40,12 +45,13 @@ export default async function OwnerProfilePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [owners, { seasons }, { punishments }, { awards }] =
+  const [owners, { seasons }, { punishments }, { awards }, matchupsData] =
     await Promise.all([
       getOwners(),
       getPastSeasons({ withStandings: true }),
       getPunishments({ ownerId: id }),
       getBadgeAwards({ ownerId: id }),
+      getMatchupsData(),
     ]);
 
   const raw = owners.find((o) => o.id === id);
@@ -57,6 +63,7 @@ export default async function OwnerProfilePage({
   const finishes = ownerSeasonFinishes(seasons, owner.id);
   const championships = finishes.filter((f) => f.is_champion);
   const runnerUps = finishes.filter((f) => f.is_runner_up);
+  const roster = getOwnerLatestLineup(matchupsData.matchups, owner.id);
 
   return (
     <PublicPageShell>
@@ -134,6 +141,29 @@ export default async function OwnerProfilePage({
             )}
           </div>
         </header>
+
+        {/* Current / latest Sleeper roster */}
+        <section>
+          <p className="ff-ribbon text-[10px] !px-3 !py-1">This week</p>
+          <h2 className="ff-display mt-2.5 text-2xl">Roster</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Starters then bench from the latest Sleeper sync
+            {roster ? ` (week ${roster.week})` : ""}.
+          </p>
+          <div className="mt-4">
+            {roster ? (
+              <OwnerRosterLineup
+                starters={roster.starters}
+                bench={roster.bench}
+                week={roster.week}
+              />
+            ) : (
+              <p className="ff-card border-dashed p-5 text-sm text-muted-foreground">
+                Lineup posts after Sleeper sets Week 1.
+              </p>
+            )}
+          </div>
+        </section>
 
         {/* Weekly award log */}
         {awards.length > 0 && (

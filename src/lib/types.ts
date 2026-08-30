@@ -167,6 +167,19 @@ export interface Standing {
   owner?: Owner;
 }
 
+/** One Sleeper roster slot persisted on matchups.*.starters / bench */
+export interface LineupPlayer {
+  player_id: string;
+  /** e.g. "J. Chase" — empty slot → "" */
+  name: string;
+  pos: string;
+  nfl_team: string;
+  /** League slot label: QB, RB, FLEX, BN, … */
+  slot: string;
+  /** Fantasy points for the week (0 until the game) */
+  points: number;
+}
+
 export interface Matchup {
   id: string;
   season: number;
@@ -177,6 +190,10 @@ export interface Matchup {
   away_score: number | null;
   is_playoff: boolean;
   is_complete: boolean;
+  home_starters: LineupPlayer[];
+  away_starters: LineupPlayer[];
+  home_bench: LineupPlayer[];
+  away_bench: LineupPlayer[];
   home_owner?: Owner;
   away_owner?: Owner;
 }

@@ -13,6 +13,7 @@ import { formatMoney, formatRecord, formatPoints, cn } from "@/lib/utils";
 import { DraftCountdown } from "@/components/home/draft-countdown";
 import { OwnerAvatar } from "@/components/home/owner-avatar";
 import { HubEventsPopup } from "@/components/dashboard/hub-events-popup";
+import { MatchupLineups } from "@/components/matchups/matchup-lineups";
 import { ScrollableTable } from "@/components/ui/scrollable-table";
 import { DEFAULT_DRAFT_AT, type Matchup, type Standing } from "@/lib/types";
 
@@ -523,6 +524,7 @@ function WeekMatchupCard({
           </div>
         </div>
       </div>
+      <MatchupLineups matchup={matchup} compact />
     </article>
   );
 }

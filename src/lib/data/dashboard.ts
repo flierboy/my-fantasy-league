@@ -21,6 +21,30 @@ import type {
   TrashTalkPost,
 } from "@/lib/types";
 
+/** Latest synced lineup for an owner (starters then bench). */
+export function getOwnerLatestLineup(
+  matchups: Matchup[],
+  ownerId: string
+): {
+  week: number;
+  starters: Matchup["home_starters"];
+  bench: Matchup["home_bench"];
+} | null {
+  const relevant = matchups
+    .filter(
+      (m) => m.home_owner_id === ownerId || m.away_owner_id === ownerId
+    )
+    .sort((a, b) => b.week - a.week);
+  const latest = relevant[0];
+  if (!latest) return null;
+  const isHome = latest.home_owner_id === ownerId;
+  return {
+    week: latest.week,
+    starters: isHome ? latest.home_starters : latest.away_starters,
+    bench: isHome ? latest.home_bench : latest.away_bench,
+  };
+}
+
 export async function getMatchupsData(season?: number): Promise<{
   league: LeagueSettings;
   owners: Owner[];

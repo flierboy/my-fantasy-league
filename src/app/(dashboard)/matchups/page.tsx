@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getMatchupsData } from "@/lib/data/dashboard";
 import { formatRecord } from "@/lib/utils";
 import { OwnerAvatar } from "@/components/home/owner-avatar";
+import { MatchupLineups } from "@/components/matchups/matchup-lineups";
 import { ScrollableTable } from "@/components/ui/scrollable-table";
 import { cn } from "@/lib/utils";
 
@@ -106,52 +107,63 @@ export default async function MatchupsPage({
                 awayScore > homeScore;
 
               return (
-                <div
+                <article
                   key={m.id}
-                  className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-xl border-2 border-foreground bg-white p-4 shadow-sm"
+                  className="rounded-xl border-2 border-foreground bg-white p-4 shadow-sm sm:p-5"
                 >
-                  <div className="flex items-center gap-2 justify-end text-right">
-                    <div className="min-w-0">
-                      <p
-                        className={cn(
-                          "ff-display truncate text-sm",
-                          homeWins && "text-emerald-800"
-                        )}
-                      >
-                        {home?.display_name ?? "TBD"}
-                        {homeWins ? " ✓" : ""}
-                      </p>
-                      <p className="font-mono text-sm font-bold tabular-nums">
-                        {homeScore != null ? homeScore.toFixed(1) : "—"}
-                      </p>
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                    <div className="flex items-center gap-2 justify-end text-right">
+                      <div className="min-w-0">
+                        <p
+                          className={cn(
+                            "ff-display truncate text-sm",
+                            homeWins && "text-emerald-800"
+                          )}
+                        >
+                          {home?.display_name ?? "TBD"}
+                          {homeWins ? " ✓" : ""}
+                        </p>
+                        <p className="font-mono text-sm font-bold tabular-nums">
+                          {homeScore != null ? homeScore.toFixed(1) : "0.0"}
+                        </p>
+                      </div>
+                      {home && (
+                        <OwnerAvatar
+                          name={home.display_name}
+                          src={home.avatar_url}
+                          size="sm"
+                        />
+                      )}
                     </div>
-                    {home && (
-                      <OwnerAvatar name={home.display_name} size="sm" />
-                    )}
-                  </div>
-                  <span className="ff-display text-xs text-muted-foreground">
-                    {m.is_complete ? "final" : "vs"}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    {away && (
-                      <OwnerAvatar name={away.display_name} size="sm" />
-                    )}
-                    <div className="min-w-0">
-                      <p
-                        className={cn(
-                          "ff-display truncate text-sm",
-                          awayWins && "text-emerald-800"
-                        )}
-                      >
-                        {awayWins ? "✓ " : ""}
-                        {away?.display_name ?? "TBD"}
-                      </p>
-                      <p className="font-mono text-sm font-bold tabular-nums">
-                        {awayScore != null ? awayScore.toFixed(1) : "—"}
-                      </p>
+                    <span className="ff-display text-xs text-muted-foreground">
+                      {m.is_complete ? "final" : "vs"}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {away && (
+                        <OwnerAvatar
+                          name={away.display_name}
+                          src={away.avatar_url}
+                          size="sm"
+                        />
+                      )}
+                      <div className="min-w-0">
+                        <p
+                          className={cn(
+                            "ff-display truncate text-sm",
+                            awayWins && "text-emerald-800"
+                          )}
+                        >
+                          {awayWins ? "✓ " : ""}
+                          {away?.display_name ?? "TBD"}
+                        </p>
+                        <p className="font-mono text-sm font-bold tabular-nums">
+                          {awayScore != null ? awayScore.toFixed(1) : "0.0"}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                  <MatchupLineups matchup={m} />
+                </article>
               );
             })}
           </div>

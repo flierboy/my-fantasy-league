@@ -2,6 +2,7 @@ import type {
   BadgeKey,
   DuePayment,
   LeagueSettings,
+  LineupPlayer,
   Matchup,
   Owner,
   Poll,
@@ -83,6 +84,21 @@ export function mapLeague(row: Record<string, unknown>): LeagueSettings {
   };
 }
 
+function mapLineupPlayers(raw: unknown): LineupPlayer[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((item) => {
+    const r = (item ?? {}) as Record<string, unknown>;
+    return {
+      player_id: String(r.player_id ?? ""),
+      name: String(r.name ?? ""),
+      pos: String(r.pos ?? ""),
+      nfl_team: String(r.nfl_team ?? ""),
+      slot: String(r.slot ?? ""),
+      points: Number(r.points ?? 0) || 0,
+    };
+  });
+}
+
 export function mapMatchup(
   row: Record<string, unknown>,
   ownersById: Map<string, Owner>
@@ -99,6 +115,10 @@ export function mapMatchup(
     away_score: row.away_score == null ? null : Number(row.away_score),
     is_playoff: Boolean(row.is_playoff),
     is_complete: Boolean(row.is_complete),
+    home_starters: mapLineupPlayers(row.home_starters),
+    away_starters: mapLineupPlayers(row.away_starters),
+    home_bench: mapLineupPlayers(row.home_bench),
+    away_bench: mapLineupPlayers(row.away_bench),
     home_owner: ownersById.get(homeId),
     away_owner: ownersById.get(awayId),
   };

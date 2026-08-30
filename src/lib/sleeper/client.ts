@@ -38,6 +38,12 @@ export type SleeperRoster = {
   roster_id: number;
   owner_id: string | null;
   co_owners?: string[] | null;
+  /** Full roster player ids (includes starters + bench) */
+  players?: string[] | null;
+  /** Starting lineup player ids (order matches league.roster_positions) */
+  starters?: string[] | null;
+  reserve?: string[] | null;
+  taxi?: string[] | null;
   settings?: {
     wins?: number;
     losses?: number;
@@ -49,6 +55,18 @@ export type SleeperRoster = {
     waiver_position?: number;
     [key: string]: number | undefined;
   };
+};
+
+/** Subset of /players/nfl fields we need for lineup display. */
+export type SleeperNflPlayer = {
+  player_id?: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  full_name?: string | null;
+  position?: string | null;
+  fantasy_positions?: string[] | null;
+  team?: string | null;
+  status?: string | null;
 };
 
 export type SleeperNflState = {

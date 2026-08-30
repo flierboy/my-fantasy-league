@@ -1,12 +1,17 @@
 /**
  * Write weekly matchup rows from Sleeper into public.matchups.
  * Replaces any existing rows for that season+week (Sleeper preferred).
+ * Persists starting lineups + bench when Sleeper provides starters[].
  */
 
 import {
   fetchSleeperMatchups,
   type SleeperMatchup,
+  type SleeperNflPlayer,
 } from "@/lib/sleeper/client";
+import { buildLineupFromSleeperMatchup } from "@/lib/sleeper/lineups";
+import { getSleeperNflPlayersMap } from "@/lib/sleeper/players";
+import type { LineupPlayer } from "@/lib/types";
 import type { createClient } from "@/lib/supabase/server";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
@@ -16,6 +21,7 @@ export type WeeklyMatchupSyncResult = {
   season: number;
   matchupsWritten: number;
   skippedPairs: number;
+  lineupsFilled: number;
   notes: string[];
 };
 
@@ -34,11 +40,14 @@ export async function syncWeeklyMatchupsFromSleeper(opts: {
   season: number;
   week: number;
   rosterToOwner: Map<number, string>;
+  /** League roster_positions for slot labels (QB, RB, FLEX, …) */
+  rosterPositions?: string[] | null;
   /** When true, treat scores as final for is_complete */
   weekIsComplete?: boolean;
 }): Promise<WeeklyMatchupSyncResult> {
   const notes: string[] = [];
   const { supabase, leagueId, season, week, rosterToOwner } = opts;
+  const rosterPositions = opts.rosterPositions ?? null;
 
   let rows: SleeperMatchup[] = [];
   try {
@@ -49,6 +58,7 @@ export async function syncWeeklyMatchupsFromSleeper(opts: {
       season,
       matchupsWritten: 0,
       skippedPairs: 0,
+      lineupsFilled: 0,
       notes: [
         `Matchups fetch failed for week ${week}: ${
           err instanceof Error ? err.message : String(err)
@@ -63,8 +73,21 @@ export async function syncWeeklyMatchupsFromSleeper(opts: {
       season,
       matchupsWritten: 0,
       skippedPairs: 0,
+      lineupsFilled: 0,
       notes: [`No Sleeper matchup data for week ${week}`],
     };
+  }
+
+  let playersById = new Map<string, SleeperNflPlayer>();
+  try {
+    playersById = await getSleeperNflPlayersMap();
+    notes.push(`NFL player cache loaded (${playersById.size} ids)`);
+  } catch (err) {
+    notes.push(
+      `Player name cache failed — lineups will use ids only: ${
+        err instanceof Error ? err.message : String(err)
+      }`
+    );
   }
 
   // Pair by matchup_id
@@ -81,9 +104,14 @@ export async function syncWeeklyMatchupsFromSleeper(opts: {
     away_owner_id: string;
     home_score: number;
     away_score: number;
+    home_starters: LineupPlayer[];
+    away_starters: LineupPlayer[];
+    home_bench: LineupPlayer[];
+    away_bench: LineupPlayer[];
   };
   const pairs: Pair[] = [];
   let skippedPairs = 0;
+  let lineupsFilled = 0;
 
   for (const [, group] of byMatchup) {
     if (group.length < 2) {
@@ -105,11 +133,29 @@ export async function syncWeeklyMatchupsFromSleeper(opts: {
     const awayOwner =
       away.roster_id === a.roster_id ? ownerA : ownerB;
 
+    const homeLineup = buildLineupFromSleeperMatchup(
+      home,
+      rosterPositions,
+      playersById
+    );
+    const awayLineup = buildLineupFromSleeperMatchup(
+      away,
+      rosterPositions,
+      playersById
+    );
+
+    if (homeLineup.starters.some((s) => s.player_id)) lineupsFilled += 1;
+    if (awayLineup.starters.some((s) => s.player_id)) lineupsFilled += 1;
+
     pairs.push({
       home_owner_id: homeOwner,
       away_owner_id: awayOwner,
       home_score: scoreOf(home),
       away_score: scoreOf(away),
+      home_starters: homeLineup.starters,
+      away_starters: awayLineup.starters,
+      home_bench: homeLineup.bench,
+      away_bench: awayLineup.bench,
     });
   }
 
@@ -119,7 +165,9 @@ export async function syncWeeklyMatchupsFromSleeper(opts: {
       season,
       matchupsWritten: 0,
       skippedPairs,
+      lineupsFilled: 0,
       notes: [
+        ...notes,
         `Week ${week}: no matchup pairs mapped to site owners (check Sleeper name matching)`,
       ],
     };
@@ -149,22 +197,73 @@ export async function syncWeeklyMatchupsFromSleeper(opts: {
     away_score: p.away_score,
     is_playoff: false,
     is_complete: isComplete,
+    home_starters: p.home_starters,
+    away_starters: p.away_starters,
+    home_bench: p.home_bench,
+    away_bench: p.away_bench,
   }));
 
   const { error: insErr } = await supabase.from("matchups").insert(insertRows);
   if (insErr) {
+    // Fallback if jsonb columns not migrated yet — insert scores only
+    if (
+      /home_starters|away_starters|home_bench|away_bench|column/i.test(
+        insErr.message
+      )
+    ) {
+      notes.push(
+        `Lineup columns missing — run supabase/migrate-matchup-lineups.sql (${insErr.message})`
+      );
+      const scoreOnly = pairs.map((p) => ({
+        season,
+        week,
+        home_owner_id: p.home_owner_id,
+        away_owner_id: p.away_owner_id,
+        home_score: p.home_score,
+        away_score: p.away_score,
+        is_playoff: false,
+        is_complete: isComplete,
+      }));
+      const { error: retryErr } = await supabase
+        .from("matchups")
+        .insert(scoreOnly);
+      if (retryErr) {
+        notes.push(`Matchups insert failed: ${retryErr.message}`);
+        return {
+          week,
+          season,
+          matchupsWritten: 0,
+          skippedPairs,
+          lineupsFilled: 0,
+          notes,
+        };
+      }
+      notes.push(
+        `Week ${week}: wrote ${scoreOnly.length} matchup score(s) without lineups`
+      );
+      return {
+        week,
+        season,
+        matchupsWritten: scoreOnly.length,
+        skippedPairs,
+        lineupsFilled: 0,
+        notes,
+      };
+    }
+
     notes.push(`Matchups insert failed: ${insErr.message}`);
     return {
       week,
       season,
       matchupsWritten: 0,
       skippedPairs,
+      lineupsFilled: 0,
       notes,
     };
   }
 
   notes.push(
-    `Week ${week}: wrote ${insertRows.length} matchup${insertRows.length === 1 ? "" : "s"} from Sleeper`
+    `Week ${week}: wrote ${insertRows.length} matchup${insertRows.length === 1 ? "" : "s"} from Sleeper (${lineupsFilled} side(s) with starters)`
   );
   if (skippedPairs) {
     notes.push(`${skippedPairs} pair(s) skipped (bye / unmatched roster)`);
@@ -175,6 +274,7 @@ export async function syncWeeklyMatchupsFromSleeper(opts: {
     season,
     matchupsWritten: insertRows.length,
     skippedPairs,
+    lineupsFilled,
     notes,
   };
 }

@@ -375,6 +375,7 @@ export async function syncSleeperLeague(
         season: seasonYear,
         week: syncedWeek,
         rosterToOwner,
+        rosterPositions: league.roster_positions ?? null,
         weekIsComplete,
       });
       matchupsWritten = matchResult.matchupsWritten;
