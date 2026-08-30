@@ -105,6 +105,12 @@ const SECTIONS = [
     blurb: "Post news + email owners",
   },
   {
+    href: "/admin/events",
+    icon: "🗓️",
+    title: "Events",
+    blurb: "Draft, meetups, Hub calendar",
+  },
+  {
     href: "/admin/trash-talk",
     icon: "🛡️",
     title: "Moderation",

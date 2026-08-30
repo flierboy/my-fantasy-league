@@ -21,6 +21,7 @@ const LINKS = [
   { href: "/admin/dues", label: "Dues" },
   { href: "/admin/polls", label: "Polls" },
   { href: "/admin/announcements", label: "Announcements" },
+  { href: "/admin/events", label: "Events" },
   { href: "/admin/trash-talk", label: "Moderation" },
 ];
 

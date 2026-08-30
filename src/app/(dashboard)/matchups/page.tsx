@@ -202,12 +202,10 @@ export default async function MatchupsPage({
                         {formatRecord(row.wins, row.losses, row.ties)}
                       </td>
                       <td className="px-4 py-3 text-right font-mono text-muted-foreground">
-                        {row.points_for > 0 ? row.points_for.toFixed(1) : "—"}
+                        {row.points_for.toFixed(1)}
                       </td>
                       <td className="px-4 py-3 text-right font-mono text-muted-foreground">
-                        {row.points_against > 0
-                          ? row.points_against.toFixed(1)
-                          : "—"}
+                        {row.points_against.toFixed(1)}
                       </td>
                     </tr>
                   );
@@ -216,10 +214,10 @@ export default async function MatchupsPage({
             </table>
           </ScrollableTable>
         )}
-        {standings[0]?.id.startsWith("fallback-") && (
+        {standings.every((s) => s.wins === 0 && s.losses === 0 && s.ties === 0) &&
+          standings.every((s) => s.points_for === 0) && (
           <p className="mt-2 text-xs text-muted-foreground">
-            Showing franchise all-time records until this season’s standings are
-            live.
+            Current season · 0-0-0 until Week 1 scores sync from Sleeper.
           </p>
         )}
       </section>

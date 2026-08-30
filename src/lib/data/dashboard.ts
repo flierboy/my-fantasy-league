@@ -40,7 +40,7 @@ export async function getMatchupsData(season?: number): Promise<{
       league,
       owners,
       matchups: [],
-      standings: standingsFromOwners(owners, activeSeason),
+      standings: emptySeasonStandings(owners, activeSeason),
       season: activeSeason,
       week: null,
       source: "fallback",
@@ -75,14 +75,13 @@ export async function getMatchupsData(season?: number): Promise<{
       mapMatchup(row as Record<string, unknown>, byId)
     );
 
-    let standings = (standingsRes.data ?? []).map((row) =>
+    const loaded = (standingsRes.data ?? []).map((row) =>
       mapStanding(row as Record<string, unknown>, byId)
     );
 
-    // Fall back to franchise all-time records if no season standings yet
-    if (standings.length === 0) {
-      standings = standingsFromOwners(owners, activeSeason);
-    }
+    // Current-season only: never fall back to career W-L.
+    // Missing season rows → every owner at 0-0-0 / 0.0 / 0.0.
+    const standings = mergeSeasonStandings(owners, activeSeason, loaded);
 
     const latestWeek =
       matchups.length > 0
@@ -104,7 +103,7 @@ export async function getMatchupsData(season?: number): Promise<{
       league,
       owners,
       matchups: [],
-      standings: standingsFromOwners(owners, activeSeason),
+      standings: emptySeasonStandings(owners, activeSeason),
       season: activeSeason,
       week: null,
       source: "fallback",
@@ -112,25 +111,52 @@ export async function getMatchupsData(season?: number): Promise<{
   }
 }
 
-function standingsFromOwners(owners: Owner[], season: number): Standing[] {
-  const sorted = [...owners].sort((a, b) => {
+/** Zero-fill current-season standings (never career franchise W-L). */
+function emptySeasonStandings(owners: Owner[], season: number): Standing[] {
+  return mergeSeasonStandings(owners, season, []);
+}
+
+/**
+ * Ensure every owner has a season standing row, then sort by wins → PF and
+ * renumber ranks 1..n.
+ */
+function mergeSeasonStandings(
+  owners: Owner[],
+  season: number,
+  loaded: Standing[]
+): Standing[] {
+  const byOwner = new Map(loaded.map((s) => [s.owner_id, s]));
+  const merged = owners.map((owner) => {
+    const existing = byOwner.get(owner.id);
+    if (existing) {
+      return { ...existing, owner: existing.owner ?? owner };
+    }
+    return {
+      id: `season-zero-${owner.id}`,
+      season,
+      week: null,
+      owner_id: owner.id,
+      wins: 0,
+      losses: 0,
+      ties: 0,
+      points_for: 0,
+      points_against: 0,
+      rank: 0,
+      owner,
+    } satisfies Standing;
+  });
+
+  merged.sort((a, b) => {
     if (b.wins !== a.wins) return b.wins - a.wins;
     if (a.losses !== b.losses) return a.losses - b.losses;
-    return b.prize_money - a.prize_money;
+    if (b.points_for !== a.points_for) return b.points_for - a.points_for;
+    if (a.points_against !== b.points_against) {
+      return a.points_against - b.points_against;
+    }
+    return (a.owner?.sort_order ?? 0) - (b.owner?.sort_order ?? 0);
   });
-  return sorted.map((owner, idx) => ({
-    id: `fallback-${owner.id}`,
-    season,
-    week: null,
-    owner_id: owner.id,
-    wins: owner.wins,
-    losses: owner.losses,
-    ties: owner.ties,
-    points_for: 0,
-    points_against: 0,
-    rank: idx + 1,
-    owner,
-  }));
+
+  return merged.map((row, idx) => ({ ...row, rank: idx + 1 }));
 }
 
 export async function getDuesData(season?: number): Promise<{

@@ -317,6 +317,16 @@ export interface DepartedOwner {
   updated_at: string;
 }
 
+/** Upcoming league events (Hub + daily popup) */
+export interface LeagueEvent {
+  id: string;
+  title: string;
+  starts_at: string;
+  location: string | null;
+  kind: string;
+  created_at: string;
+}
+
 /** Draft history */
 export type DraftSource = "espn" | "yahoo" | "sleeper" | "manual";
 
