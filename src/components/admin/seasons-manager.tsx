@@ -133,7 +133,11 @@ function SeasonMetaFields({
           className={fieldInputClass}
         />
       </Field>
-      <Field label="Champion" htmlFor={`${fid}-champ`}>
+      <Field
+        label="Champion"
+        htmlFor={`${fid}-champ`}
+        hint="Trophy wall uses this owner. Set their team name on the standings row below."
+      >
         <select
           id={`${fid}-champ`}
           name="champion_owner_id"

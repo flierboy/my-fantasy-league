@@ -1,9 +1,19 @@
 import Link from "next/link";
 import { PublicPageShell } from "@/components/layout/public-page-shell";
 import { getOwners } from "@/lib/data/league";
-import { ALL_TIME_BLURB, getHistoryEntries, groupHistory } from "@/lib/data/history";
+import {
+  ALL_TIME_BLURB,
+  buildTrophyWall,
+  getHistoryEntries,
+  groupHistory,
+} from "@/lib/data/history";
 import { buildCareerFranchiseStats, getPastSeasons } from "@/lib/data/seasons";
-import { formatPoints, formatRecord, formatWinPct } from "@/lib/utils";
+import {
+  computeWinPct,
+  formatPoints,
+  formatRecord,
+  formatWinPct,
+} from "@/lib/utils";
 import { OwnerAvatar } from "@/components/home/owner-avatar";
 import { ScrollableTable } from "@/components/ui/scrollable-table";
 
@@ -21,11 +31,14 @@ export default async function HistoryPage() {
   ]);
 
   const { champions, milestones, records, notes } = groupHistory(entries);
+  const trophies = buildTrophyWall(seasons, champions);
 
   const withCareer = buildCareerFranchiseStats(owners, seasons);
   const sorted = [...withCareer].sort((a, b) => {
     if (b.career.w !== a.career.w) return b.career.w - a.career.w;
-    if (a.career.l !== b.career.l) return a.career.l - b.career.l;
+    const bPct = computeWinPct(b.career.w, b.career.l, b.career.t);
+    const aPct = computeWinPct(a.career.w, a.career.l, a.career.t);
+    if (bPct !== aPct) return bPct - aPct;
     const bpf = b.career.pf ?? 0;
     const apf = a.career.pf ?? 0;
     if (bpf !== apf) return bpf - apf;
@@ -52,11 +65,159 @@ export default async function HistoryPage() {
             entries.length === 0 &&
             seasons.length === 0 && (
               <p className="mt-2 text-xs font-semibold text-muted-foreground">
-                No history entries yet — check back after a few seasons of glory
-                (and shame).
+                No history yet — add past seasons and champions in Admin when
+                they exist. We don&apos;t invent names.
               </p>
             )}
         </header>
+
+        {/* Trophy wall — every recorded champion, newest first */}
+        <section>
+          <p className="ff-ribbon text-[10px] !px-3 !py-1">The hardware</p>
+          <h2 className="ff-display mt-2.5 text-2xl tracking-tight sm:text-3xl">
+            Trophy wall
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Every past champion on record · newest first. Commissioners set
+            champion + team name per year under Admin → Past seasons.
+          </p>
+          {trophies.length === 0 ? (
+            <p className="ff-card mt-4 p-5 text-sm text-muted-foreground">
+              No champions recorded yet. When a season ends, mark the champion
+              (and their team name on the standings row) in Admin.
+            </p>
+          ) : (
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {trophies.map((t) => (
+                <article
+                  key={t.id}
+                  className="ff-card relative overflow-hidden p-5 sm:p-6"
+                >
+                  <div
+                    className="absolute right-3 top-3 text-3xl opacity-25"
+                    aria-hidden
+                  >
+                    🏆
+                  </div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                    {t.year_label}
+                    {t.season_year ? ` · ${t.season_year}` : ""}
+                  </p>
+                  <div className="mt-3 flex items-center gap-3">
+                    <OwnerAvatar
+                      name={t.champion_name}
+                      src={t.avatar_url}
+                      size="md"
+                    />
+                    <div className="min-w-0">
+                      {t.owner_id ? (
+                        <Link
+                          href={`/players/${t.owner_id}`}
+                          className="ff-display text-xl tracking-tight hover:underline sm:text-2xl"
+                        >
+                          {t.champion_name}
+                        </Link>
+                      ) : (
+                        <p className="ff-display text-xl tracking-tight sm:text-2xl">
+                          {t.champion_name}
+                        </p>
+                      )}
+                      {t.team_name && (
+                        <p className="mt-0.5 text-sm font-semibold text-muted-foreground">
+                          {t.team_name}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {t.runner_up && (
+                    <p className="mt-3 text-sm font-semibold text-muted-foreground">
+                      Runner-up · {t.runner_up}
+                    </p>
+                  )}
+                  {t.notes && (
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                      {t.notes}
+                    </p>
+                  )}
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* ALL-TIME RECORDS — career from past_season_standings */}
+        <section>
+          <p className="ff-ribbon text-[10px] !px-3 !py-1">Franchise</p>
+          <h2 className="ff-display mt-2.5 text-2xl tracking-tight sm:text-3xl">
+            ALL-TIME RECORDS
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Career totals from past season standings (stable owner id; PF/PA
+            summed only when present). Sorted by wins, then win%, then PF.
+            Current season lives on{" "}
+            <Link href="/dashboard" className="font-bold underline">
+              Hub
+            </Link>
+            .
+          </p>
+          <ScrollableTable
+            className="mt-4"
+            minWidth="32rem"
+            hint="Swipe for Win% · PF · PA"
+          >
+            <table className="w-full text-sm">
+              <thead className="border-b-2 border-foreground bg-[#f4f2ef] text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <th className="ff-sticky-rank px-3 py-3 sm:px-4">#</th>
+                  <th className="ff-sticky-team px-3 py-3 sm:px-4">Owner</th>
+                  <th className="px-3 py-3 text-right sm:px-4">W-L-T</th>
+                  <th className="px-3 py-3 text-right sm:px-4">Win%</th>
+                  <th className="px-3 py-3 text-right sm:px-4">PF</th>
+                  <th className="px-3 py-3 text-right sm:px-4">PA</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border bg-white">
+                {sorted.map((owner, idx) => {
+                  const c = owner.career;
+                  return (
+                    <tr key={owner.id}>
+                      <td className="ff-sticky-rank px-3 py-3 font-mono font-bold sm:px-4">
+                        {idx + 1}
+                      </td>
+                      <td className="ff-sticky-team px-3 py-3 sm:px-4">
+                        <Link
+                          href={`/players/${owner.id}`}
+                          className="flex items-center gap-2 hover:underline"
+                        >
+                          <OwnerAvatar
+                            name={owner.display_name}
+                            src={owner.avatar_url}
+                            size="sm"
+                          />
+                          <span className="ff-display text-sm">
+                            {owner.display_name}
+                          </span>
+                        </Link>
+                      </td>
+                      <td className="px-3 py-3 text-right font-mono font-bold tabular-nums sm:px-4">
+                        {formatRecord(c.w, c.l, c.t)}
+                      </td>
+                      <td className="px-3 py-3 text-right font-mono tabular-nums sm:px-4">
+                        {formatWinPct(c.w, c.l, c.t)}
+                      </td>
+                      <td className="px-3 py-3 text-right font-mono tabular-nums sm:px-4">
+                        {formatPoints(c.pf)}
+                      </td>
+                      <td className="px-3 py-3 text-right font-mono tabular-nums text-muted-foreground sm:px-4">
+                        {formatPoints(c.pa)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </ScrollableTable>
+        </section>
 
         {/* Past season standings tables */}
         {seasons.length > 0 && (
@@ -164,8 +325,7 @@ export default async function HistoryPage() {
                             const name =
                               row.owner?.display_name ||
                               row.team_name ||
-                              "—";
-                            // Hardware only for explicit champ / runner-up — never every row
+                              "Unknown";
                             const champ =
                               row.is_champion === true ||
                               (Boolean(season.champion_owner_id) &&
@@ -255,46 +415,6 @@ export default async function HistoryPage() {
           </section>
         )}
 
-        {/* Champions / trophy wall */}
-        <section>
-          <p className="ff-ribbon text-[10px] !px-3 !py-1">The hardware</p>
-          <h2 className="ff-display mt-2.5 text-2xl">Trophy wall</h2>
-          {champions.length === 0 ? (
-            <p className="ff-card mt-4 p-5 text-sm text-muted-foreground">
-              No champions recorded yet.
-            </p>
-          ) : (
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {champions.map((c) => (
-                <article key={c.id} className="ff-card p-5 sm:p-6">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                    {c.year_label}
-                    {c.season_year ? ` · ${c.season_year}` : ""}
-                  </p>
-                  <p className="ff-display mt-2 text-2xl tracking-tight">
-                    🏆 {c.champion || c.title}
-                  </p>
-                  {c.runner_up && (
-                    <p className="mt-1 text-sm font-semibold text-muted-foreground">
-                      Runner-up · {c.runner_up}
-                    </p>
-                  )}
-                  {c.title && c.champion && (
-                    <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      {c.title}
-                    </p>
-                  )}
-                  {c.notes && (
-                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                      {c.notes}
-                    </p>
-                  )}
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-
         {/* Milestones */}
         <section>
           <p className="ff-ribbon text-[10px] !px-3 !py-1">Timeline</p>
@@ -306,10 +426,7 @@ export default async function HistoryPage() {
           ) : (
             <ol className="ff-card mt-4 divide-y-2 divide-border overflow-hidden">
               {milestones.map((m) => (
-                <li
-                  key={m.id}
-                  className="flex gap-4 px-4 py-4 sm:px-5"
-                >
+                <li key={m.id} className="flex gap-4 px-4 py-4 sm:px-5">
                   <span className="ff-display flex h-12 w-14 shrink-0 items-center justify-center rounded-lg border-2 border-foreground bg-[#f4f2ef] text-xs shadow-[2px_2px_0_0_#141414]">
                     {m.year_label}
                   </span>
@@ -327,15 +444,11 @@ export default async function HistoryPage() {
           )}
         </section>
 
-        {/* Records / stats */}
-        <section>
-          <p className="ff-ribbon text-[10px] !px-3 !py-1">Stats</p>
-          <h2 className="ff-display mt-2.5 text-2xl">All-time records</h2>
-          {records.length === 0 ? (
-            <p className="mt-2 text-sm text-muted-foreground">
-              No custom record entries yet. Franchise W-L is listed below.
-            </p>
-          ) : (
+        {/* Custom record blurbs (not the franchise table) */}
+        {records.length > 0 && (
+          <section>
+            <p className="ff-ribbon text-[10px] !px-3 !py-1">Stats</p>
+            <h2 className="ff-display mt-2.5 text-2xl">Record book</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {records.map((r) => (
                 <article key={r.id} className="ff-card p-5">
@@ -352,8 +465,8 @@ export default async function HistoryPage() {
                 </article>
               ))}
             </div>
-          )}
-        </section>
+          </section>
+        )}
 
         {/* Free-form notes */}
         {notes.length > 0 && (
@@ -377,79 +490,6 @@ export default async function HistoryPage() {
             </div>
           </section>
         )}
-
-        {/* Franchise table — career from past_season_standings */}
-        <section>
-          <p className="ff-ribbon text-[10px] !px-3 !py-1">Franchise</p>
-          <h2 className="ff-display mt-2.5 text-2xl">Franchise standings</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Career totals from past season standings (PF / PA summed only when
-            present). Sorted by wins, then PF.
-          </p>
-          <ScrollableTable
-            className="mt-4"
-            minWidth="36rem"
-            hint="Swipe for Win% · PF · PA · cash"
-          >
-            <table className="w-full text-sm">
-              <thead className="border-b-2 border-foreground bg-[#f4f2ef] text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                <tr>
-                  <th className="ff-sticky-rank px-3 py-3 sm:px-4">#</th>
-                  <th className="ff-sticky-team px-3 py-3 sm:px-4">Owner</th>
-                  <th className="px-3 py-3 text-right sm:px-4">W-L-T</th>
-                  <th className="px-3 py-3 text-right sm:px-4">Win%</th>
-                  <th className="px-3 py-3 text-right sm:px-4">PF</th>
-                  <th className="px-3 py-3 text-right sm:px-4">PA</th>
-                  <th className="px-3 py-3 text-right sm:px-4">
-                    Prize $
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {sorted.map((owner, idx) => {
-                  const c = owner.career;
-                  return (
-                    <tr key={owner.id}>
-                      <td className="ff-sticky-rank px-3 py-3 font-mono font-bold sm:px-4">
-                        {idx + 1}
-                      </td>
-                      <td className="ff-sticky-team px-3 py-3 sm:px-4">
-                        <Link
-                          href={`/players/${owner.id}`}
-                          className="flex items-center gap-2 hover:underline"
-                        >
-                          <OwnerAvatar
-                            name={owner.display_name}
-                            src={owner.avatar_url}
-                            size="sm"
-                          />
-                          <span className="ff-display text-sm">
-                            {owner.display_name}
-                          </span>
-                        </Link>
-                      </td>
-                      <td className="px-3 py-3 text-right font-mono font-bold tabular-nums sm:px-4">
-                        {formatRecord(c.w, c.l, c.t)}
-                      </td>
-                      <td className="px-3 py-3 text-right font-mono tabular-nums sm:px-4">
-                        {formatWinPct(c.w, c.l, c.t)}
-                      </td>
-                      <td className="px-3 py-3 text-right font-mono tabular-nums sm:px-4">
-                        {formatPoints(c.pf)}
-                      </td>
-                      <td className="px-3 py-3 text-right font-mono tabular-nums text-muted-foreground sm:px-4">
-                        {formatPoints(c.pa)}
-                      </td>
-                      <td className="px-3 py-3 text-right font-mono text-muted-foreground sm:px-4">
-                        ${owner.prize_money.toLocaleString()}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </ScrollableTable>
-        </section>
       </div>
     </PublicPageShell>
   );

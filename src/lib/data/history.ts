@@ -5,10 +5,110 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import type { HistoryEntry, HistoryEntryType } from "@/lib/types";
+import type {
+  HistoryEntry,
+  HistoryEntryType,
+  PastSeason,
+} from "@/lib/types";
 
 export const ALL_TIME_BLURB =
-  "All-time records, trophy walls, and hall-of-shame entries fill in as admins add history. Franchise W-L below tracks live owner records.";
+  "Trophy wall and all-time franchise records. Champions come from Admin → Past seasons (and History entries). No invented years.";
+
+/** One plaque on the public Trophy wall. */
+export type TrophyPlaque = {
+  id: string;
+  season_year: number;
+  year_label: string;
+  champion_name: string;
+  team_name: string | null;
+  runner_up: string | null;
+  notes: string | null;
+  owner_id: string | null;
+  avatar_url: string | null;
+  source: "season" | "history";
+};
+
+/**
+ * Merge past-season champions + history_entries (type=champion).
+ * Newest year first. Never invents names — only recorded data.
+ * Prefer past_seasons when both exist for the same year.
+ */
+export function buildTrophyWall(
+  seasons: PastSeason[],
+  historyChampions: HistoryEntry[]
+): TrophyPlaque[] {
+  const byYear = new Map<number, TrophyPlaque>();
+
+  for (const season of seasons) {
+    const champStanding =
+      season.standings?.find(
+        (s) =>
+          s.is_champion ||
+          (season.champion_owner_id != null &&
+            s.owner_id === season.champion_owner_id)
+      ) ?? null;
+
+    const owner = season.champion ?? champStanding?.owner ?? null;
+    const ownerId =
+      season.champion_owner_id ?? champStanding?.owner_id ?? null;
+
+    const championName =
+      owner?.display_name?.trim() ||
+      champStanding?.team_name?.trim() ||
+      "";
+
+    if (!championName) continue;
+
+    const teamName =
+      (champStanding?.team_name &&
+      champStanding.team_name.trim() !== championName
+        ? champStanding.team_name.trim()
+        : null) ||
+      (owner?.team_name && owner.team_name.trim() !== championName
+        ? owner.team_name.trim()
+        : null);
+
+    byYear.set(season.season_year, {
+      id: `season-${season.id}`,
+      season_year: season.season_year,
+      year_label: season.label || String(season.season_year),
+      champion_name: championName,
+      team_name: teamName,
+      runner_up: season.runner_up?.display_name ?? null,
+      notes: season.recap_notes,
+      owner_id: ownerId,
+      avatar_url: owner?.avatar_url ?? null,
+      source: "season",
+    });
+  }
+
+  for (const entry of historyChampions) {
+    const year =
+      entry.season_year ??
+      (Number.parseInt(entry.year_label, 10) || null);
+    if (year == null || !Number.isFinite(year)) continue;
+    if (byYear.has(year)) continue;
+
+    const championName =
+      entry.champion?.trim() || entry.title?.trim() || "";
+    if (!championName) continue;
+
+    byYear.set(year, {
+      id: `history-${entry.id}`,
+      season_year: year,
+      year_label: entry.year_label || String(year),
+      champion_name: championName,
+      team_name: null,
+      runner_up: entry.runner_up,
+      notes: entry.notes,
+      owner_id: null,
+      avatar_url: null,
+      source: "history",
+    });
+  }
+
+  return [...byYear.values()].sort((a, b) => b.season_year - a.season_year);
+}
 
 const VALID_TYPES = new Set<HistoryEntryType>([
   "champion",
@@ -143,8 +243,16 @@ export async function getHistoryEntries(): Promise<{
 }
 
 export function groupHistory(entries: HistoryEntry[]) {
+  const champions = entries
+    .filter((e) => e.entry_type === "champion")
+    .sort((a, b) => {
+      const ay = a.season_year ?? (Number.parseInt(a.year_label, 10) || 0);
+      const by = b.season_year ?? (Number.parseInt(b.year_label, 10) || 0);
+      if (by !== ay) return by - ay;
+      return a.sort_order - b.sort_order;
+    });
   return {
-    champions: entries.filter((e) => e.entry_type === "champion"),
+    champions,
     milestones: entries.filter((e) => e.entry_type === "milestone"),
     records: entries.filter((e) => e.entry_type === "record"),
     notes: entries.filter((e) => e.entry_type === "note"),
