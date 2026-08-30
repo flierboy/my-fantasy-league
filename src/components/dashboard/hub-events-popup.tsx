@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import type { LeagueEvent } from "@/lib/types";
-import { formatEventWhenEt } from "@/lib/data/events-format";
+import { formatEventWhen } from "@/lib/data/events-format";
+
+/** Hours after kickoff NFL games stay eligible for the popup. */
+const NFL_GRACE_MS = 6 * 60 * 60 * 1000;
 
 function todayKey(): string {
   const d = new Date();
@@ -14,9 +17,20 @@ function dismissStorageKey(eventId: string): string {
   return `ud-event-dismiss:${eventId}:${todayKey()}`;
 }
 
+function eventStillActive(e: LeagueEvent, now: number): boolean {
+  const t = new Date(e.starts_at).getTime();
+  if (!Number.isFinite(t)) return false;
+  if (e.kind === "nfl") {
+    // Show until kickoff + 6h, then drop; next game can surface
+    return now < t + NFL_GRACE_MS;
+  }
+  return t >= now;
+}
+
 /**
  * Once per calendar day for signed-in Hub visits: show the soonest event
  * within the next 14 days unless dismissed (localStorage keyed by event+date).
+ * NFL primetime stays until kickoff + 6 hours.
  */
 export function HubEventsPopup({ events }: { events: LeagueEvent[] }) {
   const [open, setOpen] = useState(false);
@@ -31,7 +45,8 @@ export function HubEventsPopup({ events }: { events: LeagueEvent[] }) {
     const upcoming = [...events]
       .filter((e) => {
         const t = new Date(e.starts_at).getTime();
-        return Number.isFinite(t) && t >= now && t <= horizon;
+        if (!Number.isFinite(t) || t > horizon) return false;
+        return eventStillActive(e, now);
       })
       .sort(
         (a, b) =>
@@ -78,7 +93,9 @@ export function HubEventsPopup({ events }: { events: LeagueEvent[] }) {
       >
         <div className="ff-top-stripe" />
         <div className="p-5 sm:p-6">
-          <p className="ff-ribbon text-[10px] !px-3 !py-1">Coming up</p>
+          <p className="ff-ribbon text-[10px] !px-3 !py-1">
+            {event.kind === "nfl" ? "Primetime" : "Coming up"}
+          </p>
           <h2
             id="hub-event-popup-title"
             className="ff-display mt-3 text-2xl tracking-tight"
@@ -86,7 +103,7 @@ export function HubEventsPopup({ events }: { events: LeagueEvent[] }) {
             {event.title}
           </h2>
           <p className="mt-2 text-sm font-semibold text-foreground">
-            {formatEventWhenEt(event.starts_at)}
+            {formatEventWhen(event.starts_at, event.kind)}
           </p>
           {event.location && (
             <p className="mt-1 text-sm text-muted-foreground">{event.location}</p>

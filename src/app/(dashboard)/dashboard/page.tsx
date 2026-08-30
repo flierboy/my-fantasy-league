@@ -8,14 +8,24 @@ import {
   getTrashTalkData,
 } from "@/lib/data/dashboard";
 import { getLeagueEvents } from "@/lib/data/events";
-import { formatEventWhenEt } from "@/lib/data/events-format";
+import { formatEventWhen } from "@/lib/data/events-format";
+import {
+  getPrimetimeSlate,
+  isPrimetimeStillActive,
+  primetimeToLeagueEvents,
+} from "@/lib/nfl/primetime";
 import { formatMoney, formatRecord, formatPoints, cn } from "@/lib/utils";
 import { DraftCountdown } from "@/components/home/draft-countdown";
 import { OwnerAvatar } from "@/components/home/owner-avatar";
 import { HubEventsPopup } from "@/components/dashboard/hub-events-popup";
 import { MatchupLineups } from "@/components/matchups/matchup-lineups";
 import { ScrollableTable } from "@/components/ui/scrollable-table";
-import { DEFAULT_DRAFT_AT, type Matchup, type Standing } from "@/lib/types";
+import {
+  DEFAULT_DRAFT_AT,
+  type LeagueEvent,
+  type Matchup,
+  type Standing,
+} from "@/lib/types";
 
 export const metadata = {
   title: "Dashboard",
@@ -87,7 +97,8 @@ export default async function DashboardPage() {
     dues,
     polls,
     trash,
-    { events },
+    { events: dbEvents },
+    primetime,
   ] = await Promise.all([
     getLeagueSettings(),
     getSessionContext(),
@@ -96,7 +107,36 @@ export default async function DashboardPage() {
     getPollsData(),
     getTrashTalkData(),
     getLeagueEvents({ upcomingOnly: true }),
+    getPrimetimeSlate(),
   ]);
+
+  const draftAt = league.draft_at || DEFAULT_DRAFT_AT;
+  const draftPassed =
+    Number.isFinite(new Date(draftAt).getTime()) &&
+    Date.now() > new Date(draftAt).getTime();
+
+  // Commissioner events only (never wipe non-nfl). Live ESPN primetime as kind=nfl.
+  const commissionerEvents = dbEvents.filter((e) => e.kind !== "nfl");
+  const nflEvents = draftPassed
+    ? primetimeToLeagueEvents(
+        primetime.games.filter((g) => isPrimetimeStillActive(g.starts_at))
+      )
+    : [];
+  // If ESPN empty, keep any Admin kind=nfl rows still active
+  const nflFallback =
+    nflEvents.length === 0
+      ? dbEvents.filter(
+          (e) => e.kind === "nfl" && isPrimetimeStillActive(e.starts_at)
+        )
+      : [];
+  const events: LeagueEvent[] = [
+    ...nflEvents,
+    ...nflFallback,
+    ...commissionerEvents,
+  ].sort(
+    (a, b) =>
+      new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()
+  );
 
   const paidCount = dues.payments.filter(
     (p) => p.amount_paid >= p.amount_due && p.amount_due > 0
@@ -140,13 +180,11 @@ export default async function DashboardPage() {
         })
       : null;
 
-  const popupEvents = events;
-
   return (
     <div className="space-y-8">
-      <HubEventsPopup events={popupEvents} />
+      <HubEventsPopup events={events} />
 
-      <DraftCountdown draftAt={league.draft_at || DEFAULT_DRAFT_AT} compact />
+      {!draftPassed && <DraftCountdown draftAt={draftAt} compact />}
 
       {/* THIS WEEK */}
       <section className="space-y-3">
@@ -293,28 +331,37 @@ export default async function DashboardPage() {
         </p>
       </section>
 
-      {/* Events */}
+      {/* Events — live NFL primetime (kind=nfl) + commissioner events */}
       <section className="space-y-3">
         <div>
           <p className="ff-ribbon text-[10px] !px-3 !py-1">Calendar</p>
           <h2 className="ff-display mt-2 text-xl tracking-tight">
             Upcoming events
           </h2>
+          {draftPassed && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Primetime from the NFL slate
+              {primetime.week != null ? ` · week ${primetime.week}` : ""}.
+              {primetime.games.length === 0
+                ? " Primetime slate posts weekly."
+                : ""}
+            </p>
+          )}
         </div>
         {events.length === 0 ? (
           <div className="ff-card border-dashed p-5 text-sm text-muted-foreground">
-            No upcoming events.{" "}
+            {draftPassed
+              ? "Primetime slate posts weekly."
+              : "No upcoming events."}{" "}
             {isAdmin ? (
               <>
                 Add one in{" "}
                 <Link href="/admin/events" className="font-semibold underline">
                   Admin → Events
                 </Link>
-                .
+                {draftPassed ? " (kind=nfl as ESPN fallback)." : "."}
               </>
-            ) : (
-              "Check back later."
-            )}
+            ) : null}
           </div>
         ) : (
           <ul className="space-y-3">
@@ -323,13 +370,13 @@ export default async function DashboardPage() {
                 <div className="ff-top-stripe" />
                 <div className="px-4 py-4 sm:px-5">
                   <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                    {ev.kind || "event"}
+                    {ev.kind === "nfl" ? "nfl · primetime" : ev.kind || "event"}
                   </p>
                   <p className="ff-display mt-1 text-lg tracking-wide">
                     {ev.title}
                   </p>
                   <p className="mt-1 text-sm font-semibold">
-                    {formatEventWhenEt(ev.starts_at)}
+                    {formatEventWhen(ev.starts_at, ev.kind)}
                   </p>
                   {ev.location && (
                     <p className="mt-0.5 text-sm text-muted-foreground">

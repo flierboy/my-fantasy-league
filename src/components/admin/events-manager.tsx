@@ -44,7 +44,10 @@ export function EventsManager({
         <h2 className="ff-display text-xl">Add event</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Shows on Hub. Signed-in owners get a once-per-day popup for events in
-          the next 14 days.
+          the next 14 days. Use kind <code className="font-mono text-xs">nfl</code>{" "}
+          as a manual fallback if the live ESPN primetime fetch fails (title like{" "}
+          <code className="font-mono text-xs">NE @ SEA</code>, location = network).
+          Live ESPN rows are not stored here and never delete your non-nfl events.
         </p>
         <ActionForm action={createLeagueEvent} className="mt-4">
           <EventFields />
@@ -108,13 +111,17 @@ function EventFields({ event }: { event?: LeagueEvent }) {
           className={fieldInputClass}
         />
       </Field>
-      <Field label="Kind" htmlFor={`${fid}-kind`}>
+      <Field
+        label="Kind"
+        htmlFor={`${fid}-kind`}
+        hint="event · draft · meetup · nfl (primetime fallback)"
+      >
         <input
           id={`${fid}-kind`}
           name="kind"
           defaultValue={event?.kind ?? "event"}
           className={fieldInputClass}
-          placeholder="event / draft / meetup"
+          placeholder="event / draft / meetup / nfl"
         />
       </Field>
       <Field
