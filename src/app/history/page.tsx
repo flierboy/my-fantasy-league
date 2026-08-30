@@ -8,14 +8,9 @@ import {
   groupHistory,
 } from "@/lib/data/history";
 import { buildCareerFranchiseStats, getPastSeasons } from "@/lib/data/seasons";
-import {
-  computeWinPct,
-  formatPoints,
-  formatRecord,
-  formatWinPct,
-} from "@/lib/utils";
+import { computeWinPct } from "@/lib/utils";
 import { OwnerAvatar } from "@/components/home/owner-avatar";
-import { ScrollableTable } from "@/components/ui/scrollable-table";
+import { HistoryStandingsResponsive } from "@/components/history/standings-responsive";
 
 export const metadata = {
   title: "History",
@@ -160,63 +155,22 @@ export default async function HistoryPage() {
             </Link>
             .
           </p>
-          <ScrollableTable
+          <HistoryStandingsResponsive
             className="mt-4"
-            minWidth="32rem"
-            hint="Swipe for Win% · PF · PA"
-          >
-            <table className="w-full text-sm">
-              <thead className="border-b-2 border-foreground bg-[#f4f2ef] text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                <tr>
-                  <th className="ff-sticky-rank px-3 py-3 sm:px-4">#</th>
-                  <th className="ff-sticky-team px-3 py-3 sm:px-4">Owner</th>
-                  <th className="px-3 py-3 text-right sm:px-4">W-L-T</th>
-                  <th className="px-3 py-3 text-right sm:px-4">Win%</th>
-                  <th className="px-3 py-3 text-right sm:px-4">PF</th>
-                  <th className="px-3 py-3 text-right sm:px-4">PA</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border bg-white">
-                {sorted.map((owner, idx) => {
-                  const c = owner.career;
-                  return (
-                    <tr key={owner.id}>
-                      <td className="ff-sticky-rank px-3 py-3 font-mono font-bold sm:px-4">
-                        {idx + 1}
-                      </td>
-                      <td className="ff-sticky-team px-3 py-3 sm:px-4">
-                        <Link
-                          href={`/players/${owner.id}`}
-                          className="flex items-center gap-2 hover:underline"
-                        >
-                          <OwnerAvatar
-                            name={owner.display_name}
-                            src={owner.avatar_url}
-                            size="sm"
-                          />
-                          <span className="ff-display text-sm">
-                            {owner.display_name}
-                          </span>
-                        </Link>
-                      </td>
-                      <td className="px-3 py-3 text-right font-mono font-bold tabular-nums sm:px-4">
-                        {formatRecord(c.w, c.l, c.t)}
-                      </td>
-                      <td className="px-3 py-3 text-right font-mono tabular-nums sm:px-4">
-                        {formatWinPct(c.w, c.l, c.t)}
-                      </td>
-                      <td className="px-3 py-3 text-right font-mono tabular-nums sm:px-4">
-                        {formatPoints(c.pf)}
-                      </td>
-                      <td className="px-3 py-3 text-right font-mono tabular-nums text-muted-foreground sm:px-4">
-                        {formatPoints(c.pa)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </ScrollableTable>
+            rows={sorted.map((owner, idx) => ({
+              id: owner.id,
+              rank: idx + 1,
+              name: owner.display_name,
+              ownerId: owner.id,
+              avatarUrl: owner.avatar_url,
+              teamName: owner.team_name,
+              wins: owner.career.w,
+              losses: owner.career.l,
+              ties: owner.career.t,
+              pointsFor: owner.career.pf,
+              pointsAgainst: owner.career.pa,
+            }))}
+          />
         </section>
 
         {/* Past season standings tables */}
@@ -293,121 +247,41 @@ export default async function HistoryPage() {
                       No standings rows for this season yet.
                     </p>
                   ) : (
-                    <ScrollableTable
-                      minWidth="34rem"
-                      hint="Swipe for Win% · PF · PA"
-                    >
-                      <table className="w-full text-sm">
-                        <thead className="border-b-2 border-foreground bg-[#f4f2ef] text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                          <tr>
-                            <th className="ff-sticky-rank px-3 py-3 sm:px-4">
-                              #
-                            </th>
-                            <th className="ff-sticky-team px-3 py-3 sm:px-4">
-                              Team / owner
-                            </th>
-                            <th className="px-3 py-3 text-right sm:px-4">
-                              W-L-T
-                            </th>
-                            <th className="px-3 py-3 text-right sm:px-4">
-                              Win%
-                            </th>
-                            <th className="px-3 py-3 text-right sm:px-4">
-                              PF
-                            </th>
-                            <th className="px-3 py-3 text-right sm:px-4">
-                              PA
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
-                          {rows.map((row) => {
-                            const name =
-                              row.owner?.display_name ||
-                              row.team_name ||
-                              "Unknown";
-                            const champ =
-                              row.is_champion === true ||
-                              (Boolean(season.champion_owner_id) &&
-                                row.owner_id === season.champion_owner_id);
-                            const runnerUp =
-                              !champ &&
-                              (row.is_runner_up === true ||
-                                (Boolean(season.runner_up_owner_id) &&
-                                  row.owner_id === season.runner_up_owner_id));
-                            return (
-                              <tr
-                                key={row.id}
-                                className={
-                                  champ
-                                    ? "bg-amber-50/90"
-                                    : runnerUp
-                                      ? "bg-zinc-50"
-                                      : undefined
-                                }
-                              >
-                                <td className="ff-sticky-rank px-3 py-3 font-mono font-bold sm:px-4">
-                                  {row.rank}
-                                  {champ ? " 🏆" : ""}
-                                  {runnerUp ? " 🥈" : ""}
-                                </td>
-                                <td className="ff-sticky-team px-3 py-3 sm:px-4">
-                                  <div className="flex items-center gap-2">
-                                    {row.owner && (
-                                      <OwnerAvatar
-                                        name={name}
-                                        src={row.owner.avatar_url}
-                                        size="sm"
-                                      />
-                                    )}
-                                    <div className="min-w-0">
-                                      {row.owner_id ? (
-                                        <Link
-                                          href={`/players/${row.owner_id}`}
-                                          className="ff-display text-sm hover:underline"
-                                        >
-                                          {name}
-                                        </Link>
-                                      ) : (
-                                        <span className="ff-display text-sm">
-                                          {name}
-                                        </span>
-                                      )}
-                                      {row.team_name &&
-                                        row.team_name !== name && (
-                                          <p className="truncate text-[11px] text-muted-foreground">
-                                            {row.team_name}
-                                          </p>
-                                        )}
-                                    </div>
-                                  </div>
-                                </td>
-                                <td className="px-3 py-3 text-right font-mono font-bold tabular-nums sm:px-4">
-                                  {formatRecord(
-                                    row.wins,
-                                    row.losses,
-                                    row.ties
-                                  )}
-                                </td>
-                                <td className="px-3 py-3 text-right font-mono tabular-nums sm:px-4">
-                                  {formatWinPct(
-                                    row.wins,
-                                    row.losses,
-                                    row.ties
-                                  )}
-                                </td>
-                                <td className="px-3 py-3 text-right font-mono tabular-nums sm:px-4">
-                                  {formatPoints(row.points_for)}
-                                </td>
-                                <td className="px-3 py-3 text-right font-mono tabular-nums text-muted-foreground sm:px-4">
-                                  {formatPoints(row.points_against)}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </ScrollableTable>
+                    <HistoryStandingsResponsive
+                      rows={rows.map((row) => {
+                        const name =
+                          row.owner?.display_name ||
+                          row.team_name ||
+                          "Unknown";
+                        const champ =
+                          row.is_champion === true ||
+                          (Boolean(season.champion_owner_id) &&
+                            row.owner_id === season.champion_owner_id);
+                        const runnerUp =
+                          !champ &&
+                          (row.is_runner_up === true ||
+                            (Boolean(season.runner_up_owner_id) &&
+                              row.owner_id === season.runner_up_owner_id));
+                        return {
+                          id: row.id,
+                          rank: row.rank,
+                          name,
+                          ownerId: row.owner_id,
+                          avatarUrl: row.owner?.avatar_url ?? null,
+                          teamName: row.team_name,
+                          wins: row.wins,
+                          losses: row.losses,
+                          ties: row.ties,
+                          pointsFor: row.points_for,
+                          pointsAgainst: row.points_against,
+                          highlight: champ
+                            ? ("champ" as const)
+                            : runnerUp
+                              ? ("runner" as const)
+                              : null,
+                        };
+                      })}
+                    />
                   )}
                 </div>
               );
