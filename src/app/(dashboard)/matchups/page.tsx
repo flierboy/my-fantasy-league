@@ -3,6 +3,7 @@ import { getMatchupsData } from "@/lib/data/dashboard";
 import { formatRecord } from "@/lib/utils";
 import { OwnerAvatar } from "@/components/home/owner-avatar";
 import { MatchupLineups } from "@/components/matchups/matchup-lineups";
+import { OpenInSleeper } from "@/components/sleeper/open-in-sleeper";
 import { ScrollableTable } from "@/components/ui/scrollable-table";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +17,7 @@ export default async function MatchupsPage({
   searchParams: Promise<{ week?: string }>;
 }) {
   const sp = await searchParams;
-  const { matchups, standings, season, week: latestWeek } =
+  const { matchups, standings, season, week: latestWeek, league } =
     await getMatchupsData();
 
   // Group matchups by week (latest first)
@@ -53,6 +54,9 @@ export default async function MatchupsPage({
             : displayWeek != null
               ? ` · week ${displayWeek}`
               : ""}
+        </p>
+        <p className="mt-3">
+          <OpenInSleeper leagueId={league.sleeper_league_id} />
         </p>
       </header>
 

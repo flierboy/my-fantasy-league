@@ -19,6 +19,7 @@ import { DraftCountdown } from "@/components/home/draft-countdown";
 import { OwnerAvatar } from "@/components/home/owner-avatar";
 import { HubEventsPopup } from "@/components/dashboard/hub-events-popup";
 import { ScrollableTable } from "@/components/ui/scrollable-table";
+import { OpenInSleeper } from "@/components/sleeper/open-in-sleeper";
 import {
   DEFAULT_DRAFT_AT,
   type LeagueEvent,
@@ -196,16 +197,19 @@ export default async function DashboardPage() {
               THIS WEEK
             </h2>
           </div>
-          <Link
-            href={
-              currentWeek != null
-                ? `/matchups?week=${currentWeek}`
-                : "/matchups"
-            }
-            className="text-xs font-bold uppercase tracking-wider text-muted-foreground underline"
-          >
-            All matchups →
-          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <OpenInSleeper leagueId={league.sleeper_league_id} />
+            <Link
+              href={
+                currentWeek != null
+                  ? `/matchups?week=${currentWeek}`
+                  : "/matchups"
+              }
+              className="text-xs font-bold uppercase tracking-wider text-muted-foreground underline"
+            >
+              All matchups →
+            </Link>
+          </div>
         </div>
 
         {orderedWeekMatchups.length === 0 ? (

@@ -16,6 +16,7 @@ import { OwnerAvatar } from "@/components/home/owner-avatar";
 import { OwnerBadge } from "@/components/home/owner-badge";
 import { MoneyChip } from "@/components/home/money-chip";
 import { OwnerRosterLineup } from "@/components/matchups/matchup-lineups";
+import { OpenInSleeper } from "@/components/sleeper/open-in-sleeper";
 import { formatPoints, formatRecord, formatWinPct } from "@/lib/utils";
 import { ScrollableTable } from "@/components/ui/scrollable-table";
 import {
@@ -23,6 +24,7 @@ import {
   latestWeekLabel,
 } from "@/lib/data/badge-awards";
 import { getBadge } from "@/lib/data/badges";
+import { getLeagueSettings } from "@/lib/data/league";
 
 export const dynamic = "force-dynamic";
 
@@ -45,13 +47,14 @@ export default async function OwnerProfilePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [owners, { seasons }, { punishments }, { awards }, matchupsData] =
+  const [owners, { seasons }, { punishments }, { awards }, matchupsData, league] =
     await Promise.all([
       getOwners(),
       getPastSeasons({ withStandings: true }),
       getPunishments({ ownerId: id }),
       getBadgeAwards({ ownerId: id }),
       getMatchupsData(),
+      getLeagueSettings(),
     ]);
 
   const raw = owners.find((o) => o.id === id);
@@ -98,6 +101,9 @@ export default async function OwnerProfilePage({
                 {owner.role}
               </span>
             )}
+            <p className="mt-3 flex justify-center sm:justify-start">
+              <OpenInSleeper leagueId={league.sleeper_league_id} />
+            </p>
             <div className="mt-4 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
               <p className="font-mono text-lg font-bold tabular-nums">
                 {formatRecord(owner.wins, owner.losses, owner.ties)}

@@ -8,7 +8,7 @@ import {
   type SleeperSyncSummary,
 } from "@/lib/actions/admin/sleeper";
 import type { ActionResult } from "@/lib/actions/admin/types";
-import { SLEEPER_DEFAULT_LEAGUE_ID } from "@/lib/sleeper/client";
+import { resolveSleeperLeagueId } from "@/lib/sleeper/links";
 import { Button } from "@/components/ui/button";
 import { Field, fieldInputClass } from "./field";
 import { FormMessage } from "./form-message";
@@ -16,11 +16,15 @@ import { FormMessage } from "./form-message";
 export function SleeperSyncForm({
   autoAwardDefault = true,
   lastSyncAt = null,
+  sleeperLeagueId = null,
 }: {
   /** From league_settings.auto_award_weekly_badges */
   autoAwardDefault?: boolean;
   lastSyncAt?: string | null;
+  /** From league_settings.sleeper_league_id */
+  sleeperLeagueId?: string | null;
 }) {
+  const defaultLeagueId = resolveSleeperLeagueId(sleeperLeagueId);
   const [pending, startTransition] = useTransition();
   const [emailPending, startEmailTransition] = useTransition();
   const [badgePending, startBadgeTransition] = useTransition();
@@ -85,7 +89,7 @@ export function SleeperSyncForm({
           <input
             id="league_id"
             name="league_id"
-            defaultValue={SLEEPER_DEFAULT_LEAGUE_ID}
+            defaultValue={defaultLeagueId}
             className={fieldInputClass + " font-mono text-xs"}
             required
           />
@@ -191,7 +195,7 @@ export function SleeperSyncForm({
           <input
             id="email_league_id"
             name="league_id"
-            defaultValue={SLEEPER_DEFAULT_LEAGUE_ID}
+            defaultValue={defaultLeagueId}
             className={fieldInputClass + " font-mono text-xs"}
             required
           />
@@ -237,7 +241,7 @@ export function SleeperSyncForm({
           <input
             id="badge_league_id"
             name="league_id"
-            defaultValue={SLEEPER_DEFAULT_LEAGUE_ID}
+            defaultValue={defaultLeagueId}
             className={fieldInputClass + " font-mono text-xs"}
             required
           />

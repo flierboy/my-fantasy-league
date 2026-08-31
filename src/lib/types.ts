@@ -245,6 +245,11 @@ export interface LeagueSettings {
   constitution_intro?: string | null;
   /** Last successful Admin → Sleeper sync (ISO). */
   last_sleeper_sync_at?: string | null;
+  /**
+   * Sleeper fantasy league id for sync + “Open in Sleeper” links.
+   * Optional until migrate-sleeper-league-id.sql (falls back to default).
+   */
+  sleeper_league_id?: string | null;
 }
 
 export interface DuePayment {

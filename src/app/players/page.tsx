@@ -1,5 +1,6 @@
 import { PublicPageShell } from "@/components/layout/public-page-shell";
 import { PlayersView } from "@/components/home/players-view";
+import { OpenInSleeper } from "@/components/sleeper/open-in-sleeper";
 import { getOwners, getLeagueSettings } from "@/lib/data/league";
 import { buildCareerFranchiseStats } from "@/lib/data/seasons";
 import { getPastSeasons } from "@/lib/data/seasons";
@@ -34,6 +35,9 @@ export default async function PlayersPage() {
             {league.name} owners — photos, teams, roles, franchise W-L, career
             PF/PA, cash, and badges. {owners.length} franchise
             {owners.length === 1 ? "" : "s"} in the book.
+          </p>
+          <p className="mt-3">
+            <OpenInSleeper leagueId={league.sleeper_league_id} />
           </p>
         </header>
 

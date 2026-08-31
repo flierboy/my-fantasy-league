@@ -81,6 +81,10 @@ export function mapLeague(row: Record<string, unknown>): LeagueSettings {
       row.last_sleeper_sync_at == null
         ? null
         : String(row.last_sleeper_sync_at),
+    sleeper_league_id:
+      row.sleeper_league_id == null || String(row.sleeper_league_id).trim() === ""
+        ? null
+        : String(row.sleeper_league_id).trim(),
   };
 }
 

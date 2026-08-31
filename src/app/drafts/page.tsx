@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { PublicPageShell } from "@/components/layout/public-page-shell";
 import { getDraftYears, groupPicksByRound } from "@/lib/data/drafts";
+import { getLeagueSettings } from "@/lib/data/league";
+import { OpenInSleeper } from "@/components/sleeper/open-in-sleeper";
 import { ScrollableTable } from "@/components/ui/scrollable-table";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +18,10 @@ export default async function DraftsPage({
   searchParams: Promise<{ year?: string }>;
 }) {
   const sp = await searchParams;
-  const { years, error, source } = await getDraftYears({ withPicks: true });
+  const [{ years, error, source }, league] = await Promise.all([
+    getDraftYears({ withPicks: true }),
+    getLeagueSettings(),
+  ]);
 
   const selectedYear =
     (sp.year ? Number(sp.year) : null) ||
@@ -43,6 +48,9 @@ export default async function DraftsPage({
               Round-by-round boards from past seasons. 2026 imports from
               Sleeper via Admin → Sleeper sync. Linked owners jump to their
               profile.
+            </p>
+            <p className="mt-3">
+              <OpenInSleeper leagueId={league.sleeper_league_id} />
             </p>
             {error && (
               <p className="mt-3 text-xs font-semibold text-amber-800">
