@@ -1,17 +1,21 @@
 import type { NflWeekScoreboard } from "@/lib/nfl/scoreboard";
-import { formatKickoffChicago } from "@/lib/data/events-format";
+import { formatKickoffTimeCt } from "@/lib/data/events-format";
 import { cn } from "@/lib/utils";
 
 /**
- * THIS WEEK · NFL — full slate grouped by day (login + Hub).
+ * Compact THIS WEEK · NFL slate — one line per game, day headers,
+ * 2-col from sm. Hub can pass scrollable to cap height.
  */
 export function NflWeekScoreboardView({
   board,
   hero = false,
+  scrollable = false,
   className,
 }: {
   board: NflWeekScoreboard;
   hero?: boolean;
+  /** Cap height + internal scroll (Hub) */
+  scrollable?: boolean;
   className?: string;
 }) {
   const { byDay, week, games } = board;
@@ -19,26 +23,35 @@ export function NflWeekScoreboardView({
   return (
     <section
       className={cn(
-        hero ? "mx-auto w-full max-w-xl text-center" : "w-full",
+        hero ? "mx-auto w-full max-w-2xl text-left" : "w-full text-left",
         className
       )}
     >
-      <p className="ff-ribbon text-[10px] !px-3 !py-1">
-        {week != null ? `Week ${week}` : "NFL"}
-      </p>
-      <h2
-        className={cn(
-          "ff-display mt-3 tracking-tight",
-          hero ? "text-3xl text-white sm:text-4xl" : "text-xl"
-        )}
-      >
-        THIS WEEK · NFL
-      </h2>
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <p
+            className={cn(
+              "ff-ribbon text-[10px] !px-3 !py-1",
+              hero && "border-white/30 bg-white/10 text-white"
+            )}
+          >
+            {week != null ? `Week ${week}` : "NFL"}
+          </p>
+          <h2
+            className={cn(
+              "ff-display mt-2 tracking-tight",
+              hero ? "text-2xl text-white sm:text-3xl" : "text-xl"
+            )}
+          >
+            THIS WEEK · NFL
+          </h2>
+        </div>
+      </div>
 
       {games.length === 0 ? (
         <p
           className={cn(
-            "mt-4 text-sm",
+            "mt-3 text-sm",
             hero ? "text-white/75" : "text-muted-foreground"
           )}
         >
@@ -47,70 +60,75 @@ export function NflWeekScoreboardView({
       ) : (
         <div
           className={cn(
-            "mt-5 space-y-5 text-left",
-            hero &&
-              "rounded-xl border-2 border-white/20 bg-black/40 p-3 backdrop-blur-sm sm:p-4"
+            "mt-3",
+            scrollable &&
+              "max-h-[min(42vh,20rem)] overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch]",
+            hero && "rounded-lg border border-white/15 bg-black/35 px-2.5 py-2"
           )}
         >
-          {byDay.map((group) => (
-            <div key={group.day}>
-              <p
-                className={cn(
-                  "text-[10px] font-bold uppercase tracking-[0.16em]",
-                  hero ? "text-[var(--accent-gold)]" : "text-muted-foreground"
-                )}
-              >
-                {group.label}
-              </p>
-              <ul className="mt-2 space-y-1.5">
-                {group.games.map((g) => (
-                  <li
-                    key={g.id}
-                    className={cn(
-                      "rounded-lg px-3 py-2",
-                      hero ? "bg-white/5" : "border border-border bg-white"
-                    )}
-                  >
-                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-                      <p
+          <div className="space-y-3">
+            {byDay.map((group) => (
+              <div key={group.day}>
+                <p
+                  className={cn(
+                    "mb-1 text-[10px] font-bold uppercase tracking-[0.18em]",
+                    hero ? "text-[var(--accent-gold)]" : "text-muted-foreground"
+                  )}
+                >
+                  {group.day}
+                </p>
+                <ul className="grid gap-x-3 gap-y-0.5 sm:grid-cols-2">
+                  {group.games.map((g) => (
+                    <li
+                      key={g.id}
+                      className={cn(
+                        "flex min-w-0 items-baseline gap-1.5 py-0.5 text-[11px] leading-snug sm:text-xs",
+                        hero ? "text-white/90" : "text-foreground"
+                      )}
+                    >
+                      <span className="ff-display min-w-0 shrink truncate text-[11px] tracking-wide sm:text-xs">
+                        {g.away} @ {g.home}
+                      </span>
+                      <span
                         className={cn(
-                          "ff-display text-base tracking-wide sm:text-lg",
-                          hero ? "text-white" : "text-foreground"
+                          "shrink-0 whitespace-nowrap font-semibold",
+                          hero ? "text-white/55" : "text-muted-foreground"
                         )}
                       >
-                        {g.away} @ {g.home}
-                      </p>
-                      <p
+                        · {formatKickoffTimeCt(g.starts_at)}
+                      </span>
+                      {g.network && (
+                        <span
+                          className={cn(
+                            "hidden shrink-0 whitespace-nowrap font-semibold sm:inline",
+                            hero ? "text-white/45" : "text-muted-foreground"
+                          )}
+                        >
+                          · {g.network}
+                        </span>
+                      )}
+                      <span
                         className={cn(
-                          "font-mono text-xs font-bold tabular-nums",
-                          g.state === "post"
-                            ? hero
-                              ? "text-white/90"
-                              : "text-foreground"
-                            : g.state === "in"
-                              ? "text-emerald-600"
+                          "ml-auto shrink-0 font-mono text-[10px] font-bold tabular-nums sm:text-[11px]",
+                          g.state === "in"
+                            ? "text-emerald-500"
+                            : g.state === "post"
+                              ? hero
+                                ? "text-white/90"
+                                : "text-foreground"
                               : hero
-                                ? "text-white/60"
+                                ? "text-white/50"
                                 : "text-muted-foreground"
                         )}
                       >
                         {g.status_label}
-                      </p>
-                    </div>
-                    <p
-                      className={cn(
-                        "mt-0.5 text-[11px] font-semibold sm:text-xs",
-                        hero ? "text-white/75" : "text-muted-foreground"
-                      )}
-                    >
-                      {formatKickoffChicago(g.starts_at)}
-                      {g.network ? ` · ${g.network}` : ""}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </section>

@@ -315,10 +315,10 @@ export default async function DashboardPage() {
         </p>
       </section>
 
-      {/* Full NFL week scoreboard (after draft) */}
+      {/* Full NFL week scoreboard (after draft) — capped height, scrolls inside */}
       {draftPassed && (
-        <section className="ff-card overflow-hidden p-4 sm:p-5">
-          <NflWeekScoreboardView board={nflBoard} />
+        <section className="ff-card overflow-hidden px-3 py-3 sm:px-4 sm:py-3.5">
+          <NflWeekScoreboardView board={nflBoard} scrollable />
         </section>
       )}
 

@@ -36,7 +36,13 @@ export default async function HomePage() {
       <SiteHeader league={league} isAuthenticated={false} minimal />
 
       <main className="relative flex flex-1 flex-col">
-        <div className="flex flex-1 flex-col items-center justify-center py-10 sm:py-14">
+        <div
+          className={
+            draftPassed && scoreboard
+              ? "flex flex-1 flex-col justify-start py-6 sm:py-8"
+              : "flex flex-1 flex-col items-center justify-center py-10 sm:py-14"
+          }
+        >
           <div className="ff-page w-full">
             {draftPassed && scoreboard ? (
               <NflWeekScoreboardView board={scoreboard} hero />
