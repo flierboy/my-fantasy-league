@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PublicPageShell } from "@/components/layout/public-page-shell";
+import { DraftReportCard2026 } from "@/components/drafts/draft-report-card";
 import { getDraftYears, groupPicksByRound } from "@/lib/data/drafts";
 import { getLeagueSettings } from "@/lib/data/league";
 import { OpenInSleeper } from "@/components/sleeper/open-in-sleeper";
@@ -182,6 +183,12 @@ export default async function DraftsPage({
                       </section>
                     );
                   })
+                )}
+
+                {active.season_year === 2026 && (
+                  <div className="border-t-2 border-foreground pt-8">
+                    <DraftReportCard2026 />
+                  </div>
                 )}
               </div>
             )}

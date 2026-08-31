@@ -1,3 +1,4 @@
+import { DraftRecapEmailButton } from "@/components/admin/draft-recap-email-button";
 import { SleeperSyncForm } from "@/components/admin/sleeper-sync-form";
 import { OpenInSleeper } from "@/components/sleeper/open-in-sleeper";
 import { resolveSleeperLeagueId } from "@/lib/sleeper/links";
@@ -35,6 +36,8 @@ export default async function AdminSleeperPage() {
         lastSyncAt={league.last_sleeper_sync_at ?? null}
         sleeperLeagueId={league.sleeper_league_id}
       />
+
+      <DraftRecapEmailButton />
     </div>
   );
 }

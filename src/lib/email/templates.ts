@@ -120,6 +120,45 @@ export function pollEmailHtml(opts: {
   };
 }
 
+export function draftRecapEmailHtml(opts: {
+  leagueName: string;
+  body: string;
+}): { subject: string; html: string; text: string } {
+  const site = getSiteUrl();
+  const draftsUrl = `${site}/drafts?year=2026`;
+  const paragraphs = opts.body
+    .split(/\n+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  const bodyHtml = `
+    <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#6b6560;">Draft recap</p>
+    <h1 style="margin:0 0 12px;font-size:22px;line-height:1.25;">UFD 2026 Draft Report Card</h1>
+    ${paragraphs
+      .map(
+        (p) =>
+          `<p style="margin:0 0 12px;color:#3d3a36;white-space:pre-wrap;">${escapeHtml(p)}</p>`
+      )
+      .join("")}
+  `;
+
+  return {
+    subject: "UFD 2026 Draft Report Card",
+    html: baseLayout({
+      leagueName: opts.leagueName,
+      preheader: "Grades, best picks, reaches, and awards from the Sleeper board.",
+      bodyHtml,
+      ctaLabel: "View 2026 draft",
+      ctaHref: draftsUrl,
+    }),
+    text: [
+      opts.body.trim(),
+      "",
+      draftsUrl,
+    ].join("\n"),
+  };
+}
+
 export function announcementEmailHtml(opts: {
   leagueName: string;
   title: string;
