@@ -7,14 +7,24 @@ export const metadata = {
   title: "Dues",
 };
 
+/** 2026 purse split (hardcoded until league_settings prize columns exist). */
+const PURSE = {
+  first: 2000,
+  second: 500,
+  third: 250,
+} as const;
+
 export default async function DuesPage() {
   const { league, payments, season } = await getDuesData();
 
+  const duesAmount = league.dues_amount;
+  const teamCount = payments.length || 10;
   const totalDue = payments.reduce((s, p) => s + p.amount_due, 0);
   const collected = payments.reduce((s, p) => s + p.amount_paid, 0);
   const paidCount = payments.filter(
     (p) => p.amount_paid >= p.amount_due && p.amount_due > 0
   ).length;
+  const poolNote = `${teamCount} × ${formatMoney(duesAmount)} = ${formatMoney(teamCount * duesAmount)}`;
 
   // Sort: unpaid first, then by name
   const sorted = [...payments].sort((a, b) => {
@@ -34,18 +44,42 @@ export default async function DuesPage() {
           Dues & prize money
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Season {season} · {formatMoney(league.dues_amount)} per team
+          Season {season} · {formatMoney(duesAmount)} per team
         </p>
       </header>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <StatCard label="Dues amount" value={formatMoney(league.dues_amount)} />
+        <StatCard label="Dues / team" value={formatMoney(duesAmount)} />
         <StatCard label="Collected" value={formatMoney(collected)} />
         <StatCard
-          label="Prize pool target"
-          value={`${formatMoney(totalDue)} · ${paidCount}/${payments.length} paid`}
+          label="Paid"
+          value={`${paidCount}/${payments.length}`}
+          sub={`${formatMoney(totalDue)} target`}
         />
       </div>
+
+      {/* Purse / payout structure */}
+      <section className="ff-card overflow-hidden">
+        <div className="ff-top-stripe" />
+        <div className="p-5 sm:p-6">
+          <p className="ff-ribbon text-[10px] !px-3 !py-1">The purse</p>
+          <h2 className="ff-display mt-2 text-xl tracking-tight">
+            Prize structure
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">{poolNote}</p>
+          <ul className="mt-4 grid gap-2 sm:grid-cols-3">
+            <PursePlace place="1st" amount={PURSE.first} accent="gold" />
+            <PursePlace place="2nd" amount={PURSE.second} />
+            <PursePlace place="3rd" amount={PURSE.third} />
+          </ul>
+          <p className="mt-4 text-xs text-muted-foreground">
+            1st {formatMoney(PURSE.first)} · 2nd {formatMoney(PURSE.second)} ·
+            3rd {formatMoney(PURSE.third)}
+            {" · "}
+            payouts from the dues pool.
+          </p>
+        </div>
+      </section>
 
       <ScrollableTable minWidth="28rem" hint="Swipe for due · paid · status">
         <table className="w-full text-sm">
@@ -60,7 +94,8 @@ export default async function DuesPage() {
           <tbody className="divide-y divide-border">
             {sorted.map((row) => {
               const name = row.owner?.display_name ?? "Unknown";
-              const paid = row.amount_paid >= row.amount_due && row.amount_due > 0;
+              const paid =
+                row.amount_paid >= row.amount_due && row.amount_due > 0;
               const partial =
                 row.amount_paid > 0 && row.amount_paid < row.amount_due;
               return (
@@ -104,13 +139,51 @@ export default async function DuesPage() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({
+  label,
+  value,
+  sub,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+}) {
   return (
     <div className="rounded-xl border-2 border-foreground bg-white p-4 shadow-sm">
       <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
         {label}
       </p>
       <p className="ff-display mt-1 text-lg tabular-nums sm:text-2xl">{value}</p>
+      {sub && (
+        <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>
+      )}
     </div>
+  );
+}
+
+function PursePlace({
+  place,
+  amount,
+  accent,
+}: {
+  place: string;
+  amount: number;
+  accent?: "gold";
+}) {
+  return (
+    <li
+      className={
+        accent === "gold"
+          ? "rounded-lg border-2 border-[var(--accent-gold)] bg-amber-50/80 px-4 py-3"
+          : "rounded-lg border-2 border-border bg-[#f4f2ef] px-4 py-3"
+      }
+    >
+      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        {place}
+      </p>
+      <p className="ff-display mt-1 text-2xl tabular-nums">
+        {formatMoney(amount)}
+      </p>
+    </li>
   );
 }
