@@ -100,7 +100,7 @@ export function NflWeekScoreboardView({
                       {g.network && (
                         <span
                           className={cn(
-                            "hidden shrink-0 whitespace-nowrap font-semibold sm:inline",
+                            "shrink-0 whitespace-nowrap font-semibold",
                             hero ? "text-white/45" : "text-muted-foreground"
                           )}
                         >

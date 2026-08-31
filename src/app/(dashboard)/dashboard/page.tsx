@@ -27,64 +27,6 @@ export const metadata = {
   title: "Dashboard",
 };
 
-const TILES = [
-  {
-    href: "/matchups",
-    icon: "📅",
-    title: "Matchups",
-    blurb: "Weekly scores & standings",
-  },
-  {
-    href: "/dues",
-    icon: "💵",
-    title: "Dues",
-    blurb: "Payments & prize pool",
-  },
-  {
-    href: "/polls",
-    icon: "📊",
-    title: "Polls",
-    blurb: "Vote on league decisions",
-  },
-  {
-    href: "/trash-talk",
-    icon: "💬",
-    title: "Trash talk",
-    blurb: "Message board / smack",
-  },
-  {
-    href: "/history",
-    icon: "📜",
-    title: "History",
-    blurb: "Champions & all-time records",
-  },
-  {
-    href: "/badges",
-    icon: "🎖️",
-    title: "Badges",
-    blurb: "Hall of glory & shame",
-  },
-  {
-    href: "/constitution",
-    icon: "📖",
-    title: "Constitution",
-    blurb: "Rules of the league",
-  },
-  {
-    href: "/players",
-    icon: "👥",
-    title: "Players",
-    blurb: "Roster cards, cash & badges",
-  },
-  {
-    href: "/admin",
-    icon: "⚙️",
-    title: "Admin",
-    blurb: "Records, draft, badges",
-    adminOnly: true,
-  },
-];
-
 export default async function DashboardPage() {
   const [
     league,
@@ -123,8 +65,6 @@ export default async function DashboardPage() {
     (p) => p.amount_paid >= p.amount_due && p.amount_due > 0
   ).length;
   const collected = dues.payments.reduce((s, p) => s + p.amount_paid, 0);
-
-  const tiles = TILES.filter((t) => !t.adminOnly || isAdmin);
 
   const currentWeek = matchupsData.week;
   const weekMatchups =
@@ -432,30 +372,6 @@ export default async function DashboardPage() {
           )}
         </div>
       </section>
-
-      <div>
-        <div className="mb-4">
-          <p className="ff-ribbon text-[10px] !px-3 !py-1">Clubhouse</p>
-          <h2 className="ff-display mt-2 text-xl tracking-tight sm:text-2xl">
-            Jump in
-          </h2>
-        </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-3.5">
-          {tiles.map((tile) => (
-            <Link
-              key={tile.href + tile.title}
-              href={tile.href}
-              className="ff-hub-tile"
-            >
-              <span className="ff-hub-icon" aria-hidden>
-                {tile.icon}
-              </span>
-              <span>{tile.title}</span>
-              <span className="ff-hub-blurb">{tile.blurb}</span>
-            </Link>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
