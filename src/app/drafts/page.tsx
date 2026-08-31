@@ -40,8 +40,9 @@ export default async function DraftsPage({
               Draft history
             </h1>
             <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-              Round-by-round boards from past seasons. Linked owners jump to
-              their profile.
+              Round-by-round boards from past seasons. 2026 imports from
+              Sleeper via Admin → Sleeper sync. Linked owners jump to their
+              profile.
             </p>
             {error && (
               <p className="mt-3 text-xs font-semibold text-amber-800">
@@ -56,7 +57,7 @@ export default async function DraftsPage({
         {years.length === 0 ? (
           <p className="ff-card p-8 text-center text-sm text-muted-foreground">
             {source === "empty"
-              ? "No draft boards yet — check back after draft day."
+              ? "No draft boards yet. After the Sleeper draft finishes, run Admin → Sleeper sync (needs league draft_id)."
               : "Draft history isn’t available right now."}
           </p>
         ) : (
@@ -102,7 +103,10 @@ export default async function DraftsPage({
 
                 {picks.length === 0 ? (
                   <p className="ff-card p-6 text-sm text-muted-foreground">
-                    No picks imported for this year yet.
+                    No picks imported for {active.season_year} yet
+                    {active.season_year >= 2026
+                      ? " — run Admin → Sleeper sync after the draft (requires Sleeper draft_id on the league)."
+                      : "."}
                   </p>
                 ) : (
                   rounds.map((round) => {

@@ -321,6 +321,15 @@ export function SleeperSyncForm({
                       : ""}
                   </li>
                 )}
+                {result.draftPicksWritten != null && (
+                  <li>
+                    <strong>Draft picks imported:</strong>{" "}
+                    {result.draftPicksWritten}
+                    {result.draftPicksWritten === 0
+                      ? " (skipped if board already filled or draft_id missing)"
+                      : " → /drafts"}
+                  </li>
+                )}
                 <li>
                   <strong>League name updated:</strong>{" "}
                   {result.settingsUpdated ? "yes" : "no"}

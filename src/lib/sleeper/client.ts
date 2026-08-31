@@ -158,6 +158,61 @@ export async function fetchSleeperMatchups(
   );
 }
 
+/** Draft metadata (status, order, slot → roster). */
+export type SleeperDraft = {
+  draft_id: string;
+  league_id?: string | null;
+  status?: string;
+  type?: string;
+  season?: string;
+  settings?: { teams?: number; rounds?: number; [key: string]: unknown };
+  draft_order?: Record<string, number> | null;
+  slot_to_roster_id?: Record<string, number> | null;
+  metadata?: Record<string, string | null> | null;
+};
+
+export type SleeperDraftPick = {
+  draft_id?: string;
+  player_id?: string | null;
+  picked_by?: string | null;
+  /** Roster that receives the pick */
+  roster_id?: number | string | null;
+  round: number;
+  /** Column on the draft board (1..teams) */
+  draft_slot?: number | null;
+  /** Overall pick number (1-based) */
+  pick_no: number;
+  metadata?: {
+    first_name?: string | null;
+    last_name?: string | null;
+    position?: string | null;
+    team?: string | null;
+    team_abbr?: string | null;
+    player_id?: string | null;
+    [key: string]: string | null | undefined;
+  } | null;
+  is_keeper?: boolean | null;
+};
+
+export async function fetchSleeperDraft(
+  draftId: string
+): Promise<SleeperDraft> {
+  return sleeperGet<SleeperDraft>(`/draft/${draftId}`);
+}
+
+export async function fetchSleeperDraftPicks(
+  draftId: string
+): Promise<SleeperDraftPick[]> {
+  return sleeperGet<SleeperDraftPick[]>(`/draft/${draftId}/picks`);
+}
+
+/** All drafts for a league (most recent first). */
+export async function fetchSleeperLeagueDrafts(
+  leagueId: string
+): Promise<SleeperDraft[]> {
+  return sleeperGet<SleeperDraft[]>(`/league/${leagueId}/drafts`);
+}
+
 export async function fetchSleeperTransactions(
   leagueId: string,
   week: number

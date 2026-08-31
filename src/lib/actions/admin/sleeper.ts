@@ -14,6 +14,7 @@ import {
   computeStandingsRanks,
   syncWeeklyMatchupsFromSleeper,
 } from "@/lib/sleeper/sync-week";
+import { syncSleeperDraftPicks } from "@/lib/sleeper/sync-draft";
 import { sendWeeklyResultsEmailToOwners } from "@/lib/email/weekly";
 import { evaluateWeeklyBadges } from "@/lib/badges/weekly-eval";
 import type { ActionResult } from "./types";
@@ -37,6 +38,8 @@ export type SleeperSyncSummary = {
   settingsUpdated?: boolean;
   /** Weekly matchups written for the synced week */
   matchupsWritten?: number;
+  /** Season draft picks imported (0 if already filled / skipped) */
+  draftPicksWritten?: number;
   /** Week number used for matchups / badges / email */
   syncedWeek?: number;
   lastSyncAt?: string;
@@ -67,11 +70,13 @@ function revalidateAll() {
   revalidatePath("/");
   revalidatePath("/dashboard");
   revalidatePath("/matchups");
+  revalidatePath("/drafts");
   revalidatePath("/history");
   revalidatePath("/players");
   revalidatePath("/badges");
   revalidatePath("/admin");
   revalidatePath("/admin/sleeper");
+  revalidatePath("/admin/drafts");
   revalidatePath("/admin/owners");
   revalidatePath("/admin/settings");
 }
@@ -363,6 +368,29 @@ export async function syncSleeperLeague(
       );
     }
 
+    // Season draft board (only if that year's picks are empty)
+    let draftPicksWritten = 0;
+    if (rosterToOwner.size > 0) {
+      const usersById = new Map(users.map((u) => [u.user_id, u]));
+      const teamNameByRoster = new Map(
+        preview.teams.map((t) => [t.rosterId, t.teamName] as const)
+      );
+      const draftResult = await syncSleeperDraftPicks({
+        supabase,
+        leagueId,
+        draftId: league.draft_id ?? null,
+        seasonYear,
+        rosterToOwner,
+        usersById,
+        teamNameByRoster,
+        onlyIfEmpty: true,
+      });
+      draftPicksWritten = draftResult.picksWritten;
+      notes.push(...draftResult.notes);
+    } else {
+      notes.push("Skipped draft import — no roster→owner mappings yet.");
+    }
+
     // Weekly matchups from Sleeper (prefer over manual for this week)
     let matchupsWritten = 0;
     const seasonUnderway =
@@ -460,15 +488,19 @@ export async function syncSleeperLeague(
     }
 
     // Headline summary for admin UI
+    const draftBit =
+      draftPicksWritten > 0
+        ? `, ${draftPicksWritten} draft picks`
+        : "";
     const headline = seasonUnderway
-      ? `Week ${syncedWeek} synced — ${matchupsWritten} matchup${matchupsWritten === 1 ? "" : "s"}, standings updated${
+      ? `Week ${syncedWeek} synced — ${matchupsWritten} matchup${matchupsWritten === 1 ? "" : "s"}, standings updated${draftBit}${
           badgeAwards?.awarded?.length
             ? `, badges: ${badgeAwards.awarded
                 .map((s) => s.replace("→", " → ").replace(/_/g, " "))
                 .join(", ")}`
             : ""
         }`
-      : `Sync complete (pre-season) — ${ownersUpdated} owners updated`;
+      : `Sync complete — ${ownersUpdated} owners updated${draftBit}`;
     notes.unshift(headline);
 
     revalidateAll();
@@ -488,6 +520,7 @@ export async function syncSleeperLeague(
       standingsUpserted,
       settingsUpdated,
       matchupsWritten,
+      draftPicksWritten,
       syncedWeek,
       lastSyncAt,
       teamPreview,
