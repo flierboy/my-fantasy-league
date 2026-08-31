@@ -4,9 +4,6 @@ import { useEffect, useState } from "react";
 import type { LeagueEvent } from "@/lib/types";
 import { formatEventWhen } from "@/lib/data/events-format";
 
-/** Hours after kickoff NFL games stay eligible for the popup. */
-const NFL_GRACE_MS = 6 * 60 * 60 * 1000;
-
 function todayKey(): string {
   const d = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -17,20 +14,9 @@ function dismissStorageKey(eventId: string): string {
   return `ud-event-dismiss:${eventId}:${todayKey()}`;
 }
 
-function eventStillActive(e: LeagueEvent, now: number): boolean {
-  const t = new Date(e.starts_at).getTime();
-  if (!Number.isFinite(t)) return false;
-  if (e.kind === "nfl") {
-    // Show until kickoff + 6h, then drop; next game can surface
-    return now < t + NFL_GRACE_MS;
-  }
-  return t >= now;
-}
-
 /**
- * Once per calendar day for signed-in Hub visits: show the soonest event
- * within the next 14 days unless dismissed (localStorage keyed by event+date).
- * NFL primetime stays until kickoff + 6 hours.
+ * Once per calendar day: soonest commissioner / league event in the next 14 days.
+ * NFL games are on the Hub scoreboard card — not modaled.
  */
 export function HubEventsPopup({ events }: { events: LeagueEvent[] }) {
   const [open, setOpen] = useState(false);
@@ -44,9 +30,9 @@ export function HubEventsPopup({ events }: { events: LeagueEvent[] }) {
     const horizon = now + 14 * 24 * 60 * 60 * 1000;
     const upcoming = [...events]
       .filter((e) => {
+        if (e.kind === "nfl") return false;
         const t = new Date(e.starts_at).getTime();
-        if (!Number.isFinite(t) || t > horizon) return false;
-        return eventStillActive(e, now);
+        return Number.isFinite(t) && t >= now && t <= horizon;
       })
       .sort(
         (a, b) =>
@@ -59,7 +45,7 @@ export function HubEventsPopup({ events }: { events: LeagueEvent[] }) {
     try {
       if (localStorage.getItem(dismissStorageKey(candidate.id))) return;
     } catch {
-      // private mode / blocked storage — still show once this mount
+      /* private mode */
     }
 
     setEvent(candidate);
@@ -93,9 +79,7 @@ export function HubEventsPopup({ events }: { events: LeagueEvent[] }) {
       >
         <div className="ff-top-stripe" />
         <div className="p-5 sm:p-6">
-          <p className="ff-ribbon text-[10px] !px-3 !py-1">
-            {event.kind === "nfl" ? "Primetime" : "Coming up"}
-          </p>
+          <p className="ff-ribbon text-[10px] !px-3 !py-1">Coming up</p>
           <h2
             id="hub-event-popup-title"
             className="ff-display mt-3 text-2xl tracking-tight"

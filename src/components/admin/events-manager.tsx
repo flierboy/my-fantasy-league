@@ -43,11 +43,12 @@ export function EventsManager({
       <section className="ff-card p-5 sm:p-6">
         <h2 className="ff-display text-xl">Add event</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Shows on Hub. Signed-in owners get a once-per-day popup for events in
-          the next 14 days. Use kind <code className="font-mono text-xs">nfl</code>{" "}
-          as a manual fallback if the live ESPN primetime fetch fails (title like{" "}
-          <code className="font-mono text-xs">NE @ SEA</code>, location = network).
-          Live ESPN rows are not stored here and never delete your non-nfl events.
+          Shows on Hub under League events. Signed-in owners get a once-per-day
+          popup for the next non-NFL event. The weekly NFL board is live from
+          ESPN (not stored here). Optional kind{" "}
+          <code className="font-mono text-xs">nfl</code> with title{" "}
+          <code className="font-mono text-xs">NE @ SEA</code> is only a fallback
+          if ESPN fails.
         </p>
         <ActionForm action={createLeagueEvent} className="mt-4">
           <EventFields />

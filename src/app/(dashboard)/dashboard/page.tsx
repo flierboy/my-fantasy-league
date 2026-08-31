@@ -9,20 +9,16 @@ import {
 } from "@/lib/data/dashboard";
 import { getLeagueEvents } from "@/lib/data/events";
 import { formatEventWhen } from "@/lib/data/events-format";
-import {
-  getPrimetimeSlate,
-  isPrimetimeStillActive,
-  primetimeToLeagueEvents,
-} from "@/lib/nfl/primetime";
+import { getNflWeekScoreboard } from "@/lib/nfl/scoreboard";
 import { formatMoney, formatRecord, formatPoints, cn } from "@/lib/utils";
 import { DraftCountdown } from "@/components/home/draft-countdown";
 import { OwnerAvatar } from "@/components/home/owner-avatar";
+import { NflWeekScoreboardView } from "@/components/home/nfl-week-scoreboard";
 import { HubEventsPopup } from "@/components/dashboard/hub-events-popup";
 import { ScrollableTable } from "@/components/ui/scrollable-table";
 import { OpenInSleeper } from "@/components/sleeper/open-in-sleeper";
 import {
   DEFAULT_DRAFT_AT,
-  type LeagueEvent,
   type Matchup,
   type Standing,
 } from "@/lib/types";
@@ -98,7 +94,7 @@ export default async function DashboardPage() {
     polls,
     trash,
     { events: dbEvents },
-    primetime,
+    nflBoard,
   ] = await Promise.all([
     getLeagueSettings(),
     getSessionContext(),
@@ -107,7 +103,7 @@ export default async function DashboardPage() {
     getPollsData(),
     getTrashTalkData(),
     getLeagueEvents({ upcomingOnly: true }),
-    getPrimetimeSlate(),
+    getNflWeekScoreboard(),
   ]);
 
   const draftAt = league.draft_at || DEFAULT_DRAFT_AT;
@@ -115,28 +111,13 @@ export default async function DashboardPage() {
     Number.isFinite(new Date(draftAt).getTime()) &&
     Date.now() > new Date(draftAt).getTime();
 
-  // Commissioner events only (never wipe non-nfl). Live ESPN primetime as kind=nfl.
-  const commissionerEvents = dbEvents.filter((e) => e.kind !== "nfl");
-  const nflEvents = draftPassed
-    ? primetimeToLeagueEvents(
-        primetime.games.filter((g) => isPrimetimeStillActive(g.starts_at))
-      )
-    : [];
-  // If ESPN empty, keep any Admin kind=nfl rows still active
-  const nflFallback =
-    nflEvents.length === 0
-      ? dbEvents.filter(
-          (e) => e.kind === "nfl" && isPrimetimeStillActive(e.starts_at)
-        )
-      : [];
-  const events: LeagueEvent[] = [
-    ...nflEvents,
-    ...nflFallback,
-    ...commissionerEvents,
-  ].sort(
-    (a, b) =>
-      new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()
-  );
+  // Commissioner / custom events only — NFL lives on the scoreboard card, not the popup
+  const commissionerEvents = dbEvents
+    .filter((e) => e.kind !== "nfl")
+    .sort(
+      (a, b) =>
+        new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()
+    );
 
   const paidCount = dues.payments.filter(
     (p) => p.amount_paid >= p.amount_due && p.amount_due > 0
@@ -182,7 +163,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <HubEventsPopup events={events} />
+      <HubEventsPopup events={commissionerEvents} />
 
       {!draftPassed && <DraftCountdown draftAt={draftAt} compact />}
 
@@ -334,64 +315,69 @@ export default async function DashboardPage() {
         </p>
       </section>
 
-      {/* Events — live NFL primetime (kind=nfl) + commissioner events */}
-      <section className="space-y-3">
-        <div>
-          <p className="ff-ribbon text-[10px] !px-3 !py-1">Calendar</p>
-          <h2 className="ff-display mt-2 text-xl tracking-tight">
-            Upcoming events
-          </h2>
-          {draftPassed && (
+      {/* Full NFL week scoreboard (after draft) */}
+      {draftPassed && (
+        <section className="ff-card overflow-hidden p-4 sm:p-5">
+          <NflWeekScoreboardView board={nflBoard} />
+        </section>
+      )}
+
+      {/* Commissioner / custom events only (dues night, etc.) */}
+      {(commissionerEvents.length > 0 || isAdmin) && (
+        <section className="space-y-3">
+          <div>
+            <p className="ff-ribbon text-[10px] !px-3 !py-1">League</p>
+            <h2 className="ff-display mt-2 text-xl tracking-tight">
+              League events
+            </h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Primetime from the NFL slate
-              {primetime.week != null ? ` · week ${primetime.week}` : ""}.
-              {primetime.games.length === 0
-                ? " Primetime slate posts weekly."
-                : ""}
+              Commissioner calendar (dues, meetups) — separate from the NFL
+              board.
             </p>
-          )}
-        </div>
-        {events.length === 0 ? (
-          <div className="ff-card border-dashed p-5 text-sm text-muted-foreground">
-            {draftPassed
-              ? "Primetime slate posts weekly."
-              : "No upcoming events."}{" "}
-            {isAdmin ? (
-              <>
-                Add one in{" "}
-                <Link href="/admin/events" className="font-semibold underline">
-                  Admin → Events
-                </Link>
-                {draftPassed ? " (kind=nfl as ESPN fallback)." : "."}
-              </>
-            ) : null}
           </div>
-        ) : (
-          <ul className="space-y-3">
-            {events.map((ev) => (
-              <li key={ev.id} className="ff-card overflow-hidden">
-                <div className="ff-top-stripe" />
-                <div className="px-4 py-4 sm:px-5">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                    {ev.kind === "nfl" ? "nfl · primetime" : ev.kind || "event"}
-                  </p>
-                  <p className="ff-display mt-1 text-lg tracking-wide">
-                    {ev.title}
-                  </p>
-                  <p className="mt-1 text-sm font-semibold">
-                    {formatEventWhen(ev.starts_at, ev.kind)}
-                  </p>
-                  {ev.location && (
-                    <p className="mt-0.5 text-sm text-muted-foreground">
-                      {ev.location}
+          {commissionerEvents.length === 0 ? (
+            <div className="ff-card border-dashed p-5 text-sm text-muted-foreground">
+              No league events.{" "}
+              {isAdmin ? (
+                <>
+                  Add one in{" "}
+                  <Link
+                    href="/admin/events"
+                    className="font-semibold underline"
+                  >
+                    Admin → Events
+                  </Link>
+                  .
+                </>
+              ) : null}
+            </div>
+          ) : (
+            <ul className="space-y-2">
+              {commissionerEvents.map((ev) => (
+                <li key={ev.id} className="ff-card overflow-hidden">
+                  <div className="ff-top-stripe" />
+                  <div className="px-4 py-3 sm:px-5">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                      {ev.kind || "event"}
                     </p>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+                    <p className="ff-display mt-1 text-base tracking-wide">
+                      {ev.title}
+                    </p>
+                    <p className="mt-0.5 text-sm font-semibold">
+                      {formatEventWhen(ev.starts_at, ev.kind)}
+                    </p>
+                    {ev.location && (
+                      <p className="mt-0.5 text-sm text-muted-foreground">
+                        {ev.location}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       {/* Status chips */}
       <section className="space-y-3">
