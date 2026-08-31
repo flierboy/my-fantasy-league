@@ -18,7 +18,6 @@ import { formatMoney, formatRecord, formatPoints, cn } from "@/lib/utils";
 import { DraftCountdown } from "@/components/home/draft-countdown";
 import { OwnerAvatar } from "@/components/home/owner-avatar";
 import { HubEventsPopup } from "@/components/dashboard/hub-events-popup";
-import { MatchupLineups } from "@/components/matchups/matchup-lineups";
 import { ScrollableTable } from "@/components/ui/scrollable-table";
 import {
   DEFAULT_DRAFT_AT,
@@ -512,10 +511,13 @@ function WeekMatchupCard({
     ? formatRecord(awayStanding.wins, awayStanding.losses, awayStanding.ties)
     : "0-0";
 
+  const href = `/matchups?week=${matchup.week}#matchup-${matchup.id}`;
+
   return (
-    <article
+    <Link
+      href={href}
       className={cn(
-        "ff-card overflow-hidden p-4 sm:p-5",
+        "ff-card block overflow-hidden p-4 transition-opacity hover:opacity-95 sm:p-5",
         highlight && "ring-2 ring-[var(--accent-gold)] ring-offset-2"
       )}
     >
@@ -571,8 +573,7 @@ function WeekMatchupCard({
           </div>
         </div>
       </div>
-      <MatchupLineups matchup={matchup} compact />
-    </article>
+    </Link>
   );
 }
 

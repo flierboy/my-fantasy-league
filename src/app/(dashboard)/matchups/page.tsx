@@ -109,7 +109,8 @@ export default async function MatchupsPage({
               return (
                 <article
                   key={m.id}
-                  className="rounded-xl border-2 border-foreground bg-white p-4 shadow-sm sm:p-5"
+                  id={`matchup-${m.id}`}
+                  className="scroll-mt-24 rounded-xl border-2 border-foreground bg-white p-4 shadow-sm sm:p-5"
                 >
                   <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
                     <div className="flex items-center gap-2 justify-end text-right">
