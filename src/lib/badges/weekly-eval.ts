@@ -67,6 +67,7 @@ type TeamWeek = {
   seasonWins: number;
   seasonLosses: number;
   starterPoints: number[];
+  starterIds: string[];
   benchPoints: number;
   hasPlayerPoints: boolean;
 };
@@ -76,8 +77,16 @@ function num(n: unknown): number {
   return Number.isFinite(v) ? v : 0;
 }
 
+function formatStarterId(id: string): string {
+  if (!id) return "empty slot";
+  if (/^[A-Z]{2,3}$/.test(id)) return id;
+  if (/^\d+$/.test(id)) return `player #${id}`;
+  return id;
+}
+
 function starterPlayerPoints(m: SleeperMatchup): {
   starters: number[];
+  starterIds: string[];
   bench: number;
   hasData: boolean;
 } {
@@ -95,6 +104,7 @@ function starterPlayerPoints(m: SleeperMatchup): {
     }
     return {
       starters: starterPts,
+      starterIds: starters.map((id) => id ?? ""),
       bench,
       hasData: starterPts.some((p) => p > 0) || bench > 0 || Boolean(pp),
     };
@@ -107,10 +117,10 @@ function starterPlayerPoints(m: SleeperMatchup): {
     for (const [pid, pts] of Object.entries(pp)) {
       if (!starterSet.has(pid)) bench += num(pts);
     }
-    return { starters: starterPts, bench, hasData: true };
+    return { starters: starterPts, starterIds: starters.map((id) => id ?? ""), bench, hasData: true };
   }
 
-  return { starters: [], bench: 0, hasData: false };
+  return { starters: [], starterIds: [], bench: 0, hasData: false };
 }
 
 export async function evaluateWeeklyBadges(opts: {
@@ -232,6 +242,7 @@ export async function evaluateWeeklyBadges(opts: {
         seasonWins: meta?.wins ?? 0,
         seasonLosses: meta?.losses ?? 0,
         starterPoints: sp.starters,
+        starterIds: sp.starterIds,
         benchPoints: sp.bench,
         hasPlayerPoints: sp.hasData,
       });
@@ -433,6 +444,45 @@ export async function evaluateWeeklyBadges(opts: {
         }
       } else {
         skipped.push("Squeaked By: no wins under 1.0 point");
+      }
+    }
+
+
+    // ICEEE — any starter who scored 0 or fewer points (chug a Smirnoff Ice)
+    {
+      const withStarters = teams.filter(
+        (t) => t.hasPlayerPoints && t.starterPoints.length > 0
+      );
+      if (withStarters.length) {
+        let awardedAny = false;
+        for (const t of withStarters) {
+          const duds: { id: string; pts: number }[] = [];
+          for (let i = 0; i < t.starterPoints.length; i++) {
+            const pts = t.starterPoints[i];
+            const id = t.starterIds[i] ?? "";
+            if (!id) continue;
+            if (pts <= 0) duds.push({ id, pts });
+          }
+          if (duds.length === 0) continue;
+          awardedAny = true;
+          const detail = duds
+            .map((d) => `${formatStarterId(d.id)} ${d.pts.toFixed(1)}`)
+            .join(", ");
+          const chug =
+            duds.length === 1 ? "1 Smirnoff Ice" : `${duds.length} Smirnoff Ices`;
+          push(
+            "iceee",
+            t,
+            `${duds.length} starter${duds.length === 1 ? "" : "s"} at 0 or fewer (${detail}) — chug ${chug}`
+          );
+        }
+        if (!awardedAny) {
+          skipped.push("ICEEE: no starters at 0 or fewer points");
+        }
+      } else {
+        skipped.push(
+          "ICEEE: player-level starter points not available from Sleeper for this week"
+        );
       }
     }
 
