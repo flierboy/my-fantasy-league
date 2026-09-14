@@ -207,6 +207,7 @@ export type WeeklyMatchupLine = {
   awayName: string;
   homeScore: number | null;
   awayScore: number | null;
+  trashTalk?: string | null;
 };
 
 export type WeeklyStandingLine = {
@@ -250,6 +251,7 @@ export function weeklyResultsEmailHtml(opts: {
                   <span style="color:#6b6560;"> vs </span>
                   <strong>${escapeHtml(m.homeName)}</strong>
                   <span style="color:#6b6560;"> ${hs}</span>
+                  ${jab}
                 </td>
               </tr>`;
             })
@@ -310,7 +312,7 @@ export function weeklyResultsEmailHtml(opts: {
       : opts.matchups
           .map(
             (m) =>
-              `${m.awayName} ${m.awayScore ?? "—"} vs ${m.homeName} ${m.homeScore ?? "—"}`
+              `${m.awayName} ${m.awayScore ?? "—"} vs ${m.homeName} ${m.homeScore ?? "—"}` + (m.trashTalk ? "\n  " + m.trashTalk : "")
           )
           .join("\n");
 

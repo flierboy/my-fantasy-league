@@ -19,6 +19,7 @@ import {
 } from "./templates";
 import { getOwnerEmailRecipients } from "./recipients";
 import { sendEmailToOwners, type SendBatchResult } from "./send";
+import { trashTalkForMatchup } from "./trash-talk";
 
 export type WeeklyEmailPayload = {
   week: number;
@@ -231,6 +232,10 @@ export async function buildWeeklyResultsPayload(opts: {
       if (data?.name) leagueName = String(data.name);
     } catch {
       // ignore
+    }
+
+    for (const m of matchups) {
+      m.trashTalk = trashTalkForMatchup(m, week);
     }
 
     return {
