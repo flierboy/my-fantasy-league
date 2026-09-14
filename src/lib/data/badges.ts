@@ -378,6 +378,16 @@ export const BADGES: Record<BadgeKey, Badge> = {
     className: chip.teal,
   },
 
+  iceee: {
+    key: "iceee",
+    label: "ICEEE",
+    emoji: "🧊",
+    description:
+      "Started a player who scored 0 or fewer points. Chug a Smirnoff Ice for each dud starter.",
+    category: "weekly_specialty",
+    className: chip.cyan,
+  },
+
   // ── Legacy ─────────────────────────────────────────────────────
   toilet: {
     key: "toilet",

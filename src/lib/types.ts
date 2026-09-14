@@ -54,6 +54,7 @@ export type BadgeKey =
   | "waiver_wire_wizard"
   | "defense_wins"
   | "clutch_kicker"
+  | "iceee"
   // Legacy (kept from earlier system)
   | "toilet"
   | "iron_man";

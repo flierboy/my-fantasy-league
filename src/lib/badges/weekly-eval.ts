@@ -27,6 +27,7 @@ export const AUTO_WEEKLY_BADGE_KEYS = [
   "heartbreak_kid",
   "squeaked_by",
   "punching_bag",
+  "iceee",
 ] as const satisfies readonly BadgeKey[];
 
 export type AutoWeeklyBadgeKey = (typeof AUTO_WEEKLY_BADGE_KEYS)[number];
