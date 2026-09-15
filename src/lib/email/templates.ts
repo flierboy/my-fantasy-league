@@ -222,13 +222,20 @@ export type WeeklyWaiverLine = {
   summary: string;
 };
 
+export type WeeklyBadgeLine = {
+  ownerName: string;
+  badgeLabel: string;
+  emoji: string;
+  notes: string | null;
+};
+
 export function weeklyResultsEmailHtml(opts: {
   leagueName: string;
   week: number;
   season: number;
   matchups: WeeklyMatchupLine[];
   standings: WeeklyStandingLine[];
-  waivers: WeeklyWaiverLine[];
+  badges: WeeklyBadgeLine[];
 }): { subject: string; html: string; text: string } {
   const site = getSiteUrl();
   const matchupsUrl = `${site}/matchups`;
@@ -244,6 +251,7 @@ export function weeklyResultsEmailHtml(opts: {
                 m.homeScore != null ? m.homeScore.toFixed(1) : "—";
               const as =
                 m.awayScore != null ? m.awayScore.toFixed(1) : "—";
+              const jab = m.trashTalk ? `<div style="margin:6px 0 0;font-size:13px;line-height:1.45;color:#3d3a36;font-style:italic;">${escapeHtml(m.trashTalk)}</div>` : "";
               return `<tr>
                 <td style="padding:8px 0;border-bottom:1px solid #e8e4df;">
                   <strong>${escapeHtml(m.awayName)}</strong>
@@ -280,14 +288,14 @@ export function weeklyResultsEmailHtml(opts: {
             .join("")}
         </table>`;
 
-  const waiverRows =
-    opts.waivers.length === 0
-      ? `<p style="margin:0;color:#6b6560;">No waiver activity recorded for this week (or data not available yet).</p>`
+  const badgeRows =
+    opts.badges.length === 0
+      ? `<p style="margin:0;color:#6b6560;">No weekly badges awarded yet for this week.</p>`
       : `<ul style="margin:0;padding-left:18px;">
-          ${opts.waivers
+          ${opts.badges
             .map(
-              (w) =>
-                `<li style="margin:6px 0;"><strong>${escapeHtml(w.teamName)}</strong> — ${escapeHtml(w.summary)}</li>`
+              (b) =>
+                `<li style="margin:6px 0;">${escapeHtml(b.emoji)} <strong>${escapeHtml(b.badgeLabel)}</strong> — ${escapeHtml(b.ownerName)}${b.notes ? ` <span style="color:#6b6560;">(${escapeHtml(b.notes)})</span>` : ""}</li>`
             )
             .join("")}
         </ul>`;
@@ -302,8 +310,8 @@ export function weeklyResultsEmailHtml(opts: {
     <h2 style="margin:0 0 10px;font-size:14px;letter-spacing:0.06em;text-transform:uppercase;">Standings</h2>
     <div style="margin:0 0 22px;">${standingsRows}</div>
 
-    <h2 style="margin:0 0 10px;font-size:14px;letter-spacing:0.06em;text-transform:uppercase;">Waivers</h2>
-    <div style="margin:0 0 8px;">${waiverRows}</div>
+    <h2 style="margin:0 0 10px;font-size:14px;letter-spacing:0.06em;text-transform:uppercase;">Weekly badges</h2>
+    <div style="margin:0 0 8px;">${badgeRows}</div>
   `;
 
   const textMatchups =
@@ -326,16 +334,22 @@ export function weeklyResultsEmailHtml(opts: {
           )
           .join("\n");
 
-  const textWaivers =
-    opts.waivers.length === 0
-      ? "No waiver activity."
-      : opts.waivers.map((w) => `${w.teamName}: ${w.summary}`).join("\n");
+  const textBadges =
+    opts.badges.length === 0
+      ? "No weekly badges yet."
+      : opts.badges
+          .map(
+            (b) =>
+              `${b.emoji} ${b.badgeLabel} — ${b.ownerName}` +
+              (b.notes ? ` (${b.notes})` : "")
+          )
+          .join("\n");
 
   return {
     subject: `[${opts.leagueName}] ${weekLabel} Results`,
     html: baseLayout({
       leagueName: opts.leagueName,
-      preheader: `${weekLabel} results, standings, and waivers`,
+      preheader: `${weekLabel} results, standings, and badges`,
       bodyHtml,
       ctaLabel: "View matchups",
       ctaHref: matchupsUrl,
@@ -349,8 +363,8 @@ export function weeklyResultsEmailHtml(opts: {
       "STANDINGS",
       textStandings,
       "",
-      "WAIVERS",
-      textWaivers,
+      "BADGES",
+      textBadges,
       "",
       matchupsUrl,
     ].join("\n"),

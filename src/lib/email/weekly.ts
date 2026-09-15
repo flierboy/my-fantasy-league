@@ -15,11 +15,13 @@ import {
   weeklyResultsEmailHtml,
   type WeeklyMatchupLine,
   type WeeklyStandingLine,
-  type WeeklyWaiverLine,
+  type WeeklyBadgeLine,
 } from "./templates";
 import { getOwnerEmailRecipients } from "./recipients";
 import { sendEmailToOwners, type SendBatchResult } from "./send";
 import { trashTalkForMatchup } from "./trash-talk";
+import { getBadgeAwards } from "@/lib/data/badge-awards";
+import { getBadge } from "@/lib/data/badges";
 
 export type WeeklyEmailPayload = {
   week: number;
@@ -27,7 +29,7 @@ export type WeeklyEmailPayload = {
   leagueName: string;
   matchups: WeeklyMatchupLine[];
   standings: WeeklyStandingLine[];
-  waivers: WeeklyWaiverLine[];
+  badges: WeeklyBadgeLine[];
   notes: string[];
 };
 
@@ -238,6 +240,37 @@ export async function buildWeeklyResultsPayload(opts: {
       m.trashTalk = trashTalkForMatchup(m, week);
     }
 
+    const { awards } = await getBadgeAwards({
+      seasonYear: season,
+      week,
+      limit: 80,
+    });
+    const ownerNameById = new Map<string, string>();
+    try {
+      const supabase = await createClient();
+      const { data: owners } = await supabase
+        .from("owners")
+        .select("id, display_name, team_name");
+      for (const o of owners ?? []) {
+        ownerNameById.set(
+          String(o.id),
+          o.team_name ? `${o.display_name} (${o.team_name})` : String(o.display_name)
+        );
+      }
+    } catch {
+      // non-fatal
+    }
+    const badgeLines: WeeklyBadgeLine[] = awards.map((a) => {
+      const b = getBadge(a.badge_key);
+      return {
+        ownerName: ownerNameById.get(a.owner_id) ?? "Owner",
+        badgeLabel: b.label,
+        emoji: b.emoji,
+        notes: a.notes,
+      };
+    });
+
+
     return {
       ok: true,
       data: {
@@ -246,7 +279,7 @@ export async function buildWeeklyResultsPayload(opts: {
         leagueName,
         matchups,
         standings,
-        waivers,
+        badges: badgeLines,
         notes,
       },
     };
@@ -293,7 +326,7 @@ export async function sendWeeklyResultsEmailToOwners(opts: {
     season: data.season,
     matchups: data.matchups,
     standings: data.standings,
-    waivers: data.waivers,
+    badges: data.badges,
   });
 
   const { recipients, error } = await getOwnerEmailRecipients();
