@@ -79,7 +79,6 @@ export function pollEmailHtml(opts: {
   description?: string | null;
   options: string[];
 }): { subject: string; html: string; text: string } {
-  const badgeList = opts.badges ?? [];
   const site = getSiteUrl();
   const pollsUrl = `${site}/polls`;
   const title = opts.title;
@@ -125,7 +124,6 @@ export function draftRecapEmailHtml(opts: {
   leagueName: string;
   body: string;
 }): { subject: string; html: string; text: string } {
-  const badgeList = opts.badges ?? [];
   const site = getSiteUrl();
   const draftsUrl = `${site}/drafts?year=2026`;
   const paragraphs = opts.body
@@ -166,7 +164,6 @@ export function announcementEmailHtml(opts: {
   title: string;
   body: string;
 }): { subject: string; html: string; text: string } {
-  const badgeList = opts.badges ?? [];
   const site = getSiteUrl();
   const dashUrl = `${site}/dashboard`;
   const paragraphs = opts.body
@@ -235,8 +232,8 @@ export function weeklyResultsEmailHtml(opts: {
   standings: WeeklyStandingLine[];
   badges: WeeklyBadgeLine[];
 }): { subject: string; html: string; text: string } {
-  const badgeList = opts.badges ?? [];
   const site = getSiteUrl();
+  const badgeList = opts.badges ?? [];
   const matchupsUrl = `${site}/matchups`;
   const weekLabel = `Week ${opts.week}`;
 
