@@ -254,7 +254,7 @@ export function weeklyResultsEmailHtml(opts: {
                   <span style="color:#6b6560;"> vs </span>
                   <strong>${escapeHtml(m.homeName)}</strong>
                   <span style="color:#6b6560;"> ${hs}</span>
-                  ${jab}
+                  ${m.trashTalk ? escapeHtml(m.trashTalk) : ""}
                 </td>
               </tr>`;
             })
