@@ -15,6 +15,7 @@ import {
   weeklyResultsEmailHtml,
   type WeeklyMatchupLine,
   type WeeklyStandingLine,
+  type WeeklyWaiverLine,
   type WeeklyBadgeLine,
 } from "./templates";
 import { getOwnerEmailRecipients } from "./recipients";
