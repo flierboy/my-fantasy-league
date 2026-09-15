@@ -217,11 +217,6 @@ export type WeeklyStandingLine = {
   pointsFor: number;
 };
 
-export type WeeklyWaiverLine = {
-  teamName: string;
-  summary: string;
-};
-
 export type WeeklyBadgeLine = {
   ownerName: string;
   badgeLabel: string;
@@ -247,13 +242,13 @@ export function weeklyResultsEmailHtml(opts: {
       : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:14px;">
           ${opts.matchups
             .map((m) => {
-              const hs =
-                m.homeScore != null ? m.homeScore.toFixed(1) : "—";
-              const as =
-                m.awayScore != null ? m.awayScore.toFixed(1) : "—";
-              const jab = m.trashTalk ? `<div style="margin:6px 0 0;font-size:13px;line-height:1.45;color:#3d3a36;font-style:italic;">${escapeHtml(m.trashTalk)}</div>` : "";
+              const hs = m.homeScore != null ? m.homeScore.toFixed(1) : "—";
+              const as = m.awayScore != null ? m.awayScore.toFixed(1) : "—";
+              const jab = m.trashTalk
+                ? `<div style="margin:6px 0 0;font-size:13px;line-height:1.45;color:#3d3a36;font-style:italic;">${escapeHtml(m.trashTalk)}</div>`
+                : "";
               return `<tr>
-                <td style="padding:8px 0;border-bottom:1px solid #e8e4df;">
+                <td style="padding:12px 0;border-bottom:1px solid #e8e4df;">
                   <strong>${escapeHtml(m.awayName)}</strong>
                   <span style="color:#6b6560;"> ${as}</span>
                   <span style="color:#6b6560;"> vs </span>
@@ -303,13 +298,10 @@ export function weeklyResultsEmailHtml(opts: {
   const bodyHtml = `
     <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#6b6560;">${opts.season} season</p>
     <h1 style="margin:0 0 20px;font-size:22px;line-height:1.25;">${weekLabel} Results</h1>
-
     <h2 style="margin:0 0 10px;font-size:14px;letter-spacing:0.06em;text-transform:uppercase;">Matchups</h2>
     <div style="margin:0 0 22px;">${matchupRows}</div>
-
     <h2 style="margin:0 0 10px;font-size:14px;letter-spacing:0.06em;text-transform:uppercase;">Standings</h2>
     <div style="margin:0 0 22px;">${standingsRows}</div>
-
     <h2 style="margin:0 0 10px;font-size:14px;letter-spacing:0.06em;text-transform:uppercase;">Weekly badges</h2>
     <div style="margin:0 0 8px;">${badgeRows}</div>
   `;
@@ -318,31 +310,24 @@ export function weeklyResultsEmailHtml(opts: {
     opts.matchups.length === 0
       ? "No matchup scores yet."
       : opts.matchups
-          .map(
-            (m) =>
-              `${m.awayName} ${m.awayScore ?? "—"} vs ${m.homeName} ${m.homeScore ?? "—"}` + (m.trashTalk ? "\n  " + m.trashTalk : "")
-          )
+          .map((m) => {
+            const line = `${m.awayName} ${m.awayScore ?? "—"} vs ${m.homeName} ${m.homeScore ?? "—"}`;
+            return m.trashTalk ? `${line}\n  ${m.trashTalk}` : line;
+          })
           .join("\n");
 
   const textStandings =
     opts.standings.length === 0
       ? "Standings N/A"
       : opts.standings
-          .map(
-            (s) =>
-              `${s.rank}. ${s.name} ${s.record} PF ${s.pointsFor.toFixed(1)}`
-          )
+          .map((s) => `${s.rank}. ${s.name} ${s.record} PF ${s.pointsFor.toFixed(1)}`)
           .join("\n");
 
   const textBadges =
     opts.badges.length === 0
       ? "No weekly badges yet."
       : opts.badges
-          .map(
-            (b) =>
-              `${b.emoji} ${b.badgeLabel} — ${b.ownerName}` +
-              (b.notes ? ` (${b.notes})` : "")
-          )
+          .map((b) => `${b.emoji} ${b.badgeLabel} — ${b.ownerName}` + (b.notes ? ` (${b.notes})` : ""))
           .join("\n");
 
   return {
