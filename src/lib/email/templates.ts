@@ -210,6 +210,11 @@ export type WeeklyMatchupLine = {
   trashTalk?: string | null;
 };
 
+export type WeeklyWaiverLine = {
+  teamName: string;
+  summary: string;
+};
+
 export type WeeklyStandingLine = {
   rank: number;
   name: string;
