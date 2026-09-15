@@ -15,7 +15,6 @@ function baseLayout(opts: {
   ctaLabel?: string;
   ctaHref?: string;
 }): string {
-  const badgeList = opts.badges ?? [];
   const site = getSiteUrl();
   const league = escapeHtml(opts.leagueName);
   const pre = opts.preheader ? escapeHtml(opts.preheader) : "";
